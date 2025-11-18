@@ -279,13 +279,18 @@ def render_send_nxt_tab(wallet):
             help="NexusOS address starting with 'NXS'"
         )
         
+        # Set default value based on balance (avoid max_value error)
+        default_amount = min(1.0, float(balance['balance_nxt'])) if balance['balance_nxt'] > 0 else 0.01
+        max_amount = max(0.01, float(balance['balance_nxt']))  # Ensure max >= min
+        
         amount = st.number_input(
             "Amount (NXT)",
             min_value=0.01,
-            max_value=float(balance['balance_nxt']),
-            value=1.0,
+            max_value=max_amount,
+            value=default_amount,
             step=0.01,
-            help=f"Max: {balance['balance_nxt']:.2f} NXT"
+            help=f"Max: {balance['balance_nxt']:.2f} NXT",
+            disabled=(balance['balance_nxt'] == 0)
         )
         
         password = st.text_input(
