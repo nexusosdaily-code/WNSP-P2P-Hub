@@ -23,6 +23,7 @@ from payment_layer_page import render_payment_layer_page
 from nexus_consensus_dashboard import render_nexus_consensus_dashboard
 from wavelength_economics_dashboard import render_wavelength_economics_dashboard
 from mobile_dag_messaging import render_mobile_dag_messaging
+from mobile_connectivity_dashboard import show_mobile_connectivity_dashboard
 
 st.set_page_config(
     page_title="NexusOS Advance Systems",
@@ -670,6 +671,7 @@ def main():
         module_options = [
             "📊 Dashboard",
             "📱 Mobile DAG Messaging",
+            "📲 Mobile Connectivity",
             "🔮 Predictive Analytics",
             "🔱 Nexus Consensus",
             "🌊 Wavelength Economics",
@@ -719,6 +721,8 @@ def main():
         render_dashboard()
     elif selected_module == "📱 Mobile DAG Messaging":
         render_mobile_dag_messaging()
+    elif selected_module == "📲 Mobile Connectivity":
+        show_mobile_connectivity_dashboard()
     elif selected_module == "🔮 Predictive Analytics":
         render_predictive_analytics_dashboard()
     elif selected_module == "🔱 Nexus Consensus":
