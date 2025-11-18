@@ -1,7 +1,7 @@
 # NexusOS Advance Systems
 
 ### Overview
-NexusOS Advance Systems is a comprehensive economic system simulator based on the Nexus equation. It features a self-regulating system with issuance/burn mechanics, PID feedback control, and conservation constraints within a multi-factor ecosystem. The platform offers configurable parameters, real-time visualization, scenario management with PostgreSQL persistence, and data export. Key capabilities include Monte Carlo and Sensitivity Analysis, Multi-Agent Network Simulation, Smart Contract Code Generation (Solidity, Rust/ink!), Oracle Integration, ML-Based Adaptive Parameter Tuning, User Authentication with Role-Based Access Control, and an integrated Wavelength-Native Signaling Protocol (WNSP) with cryptographic features. It also encompasses a Layer 1 Blockchain Simulator, a Proof of Spectrum (PoS) consensus framework, GhostDAG Ecosystem Optimization, a Layer 2 DEX, Enhanced Validator Economics, a native payment layer (NexusToken), and Long-Term Predictive Analytics. The project aims to provide robust tools for economic modeling, blockchain development, and secure communication.
+NexusOS Advance Systems is a comprehensive economic system simulator based on the Nexus equation. It features a self-regulating system with issuance/burn mechanics, PID feedback control, and conservation constraints within a multi-factor ecosystem. The platform offers configurable parameters, real-time visualization, scenario management with PostgreSQL persistence, and data export. Key capabilities include Monte Carlo and Sensitivity Analysis, Multi-Agent Network Simulation, Smart Contract Code Generation (Solidity, Rust/ink!), Oracle Integration, ML-Based Adaptive Parameter Tuning, User Authentication with Role-Based Access Control, an integrated Wavelength-Native Signaling Protocol (WNSP) with cryptographic features, a Layer 1 Blockchain Simulator, a Proof of Spectrum (PoS) consensus framework, GhostDAG Ecosystem Optimization, a Layer 2 DEX, Enhanced Validator Economics, a native payment layer (NexusToken), and Long-Term Predictive Analytics. The project aims to provide robust tools for economic modeling, blockchain development, and secure communication.
 
 ### User Preferences
 Preferred communication style: Simple, everyday language.
@@ -12,11 +12,11 @@ Preferred communication style: Simple, everyday language.
 The application uses Streamlit for a single-page, wide-layout dashboard with an expanded sidebar for configuration. Session state manages simulation results and parameters. Plotly provides interactive visualizations, including subplot-based time-series plots.
 
 #### Technical Implementations
-**Core Engine**: Implements mathematical simulations, differential equations, feedback loops, multi-factor system health calculation, PID control, and dynamic issuance. Numba optimization enhances performance.
+**Core Engine**: Implements mathematical simulations, differential equations, feedback loops, multi-factor system health calculation, PID control, and dynamic issuance, optimized with Numba.
 
 **Data Storage**: SQLAlchemy ORM manages `SimulationConfig` and `SimulationRun` data, with time-series data stored as JSON.
 
-**Signal Generation**: A Strategy pattern provides various signal types (constant, sinusoidal, step, random walk, pulse, linear ramp) for external inputs.
+**Signal Generation**: A Strategy pattern provides various signal types for external inputs.
 
 **Advanced Scenario Analysis**: Includes Monte Carlo Simulation, Sensitivity Analysis, and Stability Region Mapping.
 
@@ -24,7 +24,7 @@ The application uses Streamlit for a single-page, wide-layout dashboard with an 
 
 **Smart Contract Code Generation**: Automatically generates deployable smart contracts for Ethereum/EVM (Solidity) and Substrate/Polkadot (Rust/ink!).
 
-**Oracle Integration Framework**: Provides an abstraction layer for external data sources with error handling (retry, exponential backoff, circuit breaker).
+**Oracle Integration Framework**: Provides an abstraction layer for external data sources with robust error handling.
 
 **ML-Based Adaptive Parameter Tuning**: Uses Bayesian Optimization for multi-objective parameter optimization.
 
@@ -32,60 +32,27 @@ The application uses Streamlit for a single-page, wide-layout dashboard with an 
 
 **Real-time Production Dashboard**: Features auto-refresh, live KPI tiles, system health monitoring, and an intelligent alerting system.
 
-**WNSP Integration**: An optical communication protocol for mesh networking, including wavelength mapping, frame encoding/decoding, and a Streamlit visualization interface.
+**WNSP v2.0 Protocol**: An advanced Wavelength-Native Signaling Protocol with quantum cryptography, DAG messaging, and physics-based economics. Features extended character encoding, quantum-resistant cryptography using wave properties, DAG message linking, NXT payment integration based on E=hf, multi-wavelength modulation, full spectral region support, and enhanced visualizations. It also includes secure messaging integration leveraging wavelength cryptography for email, SMS, or in-app notifications.
 
-**Wavelength Cryptography Domain**: A DAG-based encryption/decryption system based on electromagnetic theory (Frequency Shift, Amplitude Modulation, Phase Modulation, Quantum-Inspired Multi-Layer). Integrated into secure messaging.
+**Wavelength-Economic Validation System**: A physics-based blockchain validation mechanism replacing traditional hashing with electromagnetic wave interference patterns. It involves `WavelengthValidator` (Maxwell equation solvers, wave superposition, 5D wave signature validation), physics-based economics (E=hf for message costs), spectral diversity consensus (5/6 region coverage), and wave interference DAG for linking messages. This system offers quantum-resistant security and battery efficiency.
 
-**Wavelength-Economic Validation System**: A revolutionary physics-based blockchain validation mechanism that replaces traditional SHA-256 hashing with electromagnetic wave interference patterns grounded in Maxwell's equations and quantum optics. Core components:
-  - **WavelengthValidator**: Implements Maxwell equation solvers (electric/magnetic field calculations), wave superposition, interference pattern generation, and 5-dimensional wave signature validation (wavelength, amplitude, phase, polarization, modulation)
-  - **Physics-Based Economics**: Message costs derived from quantum energy formula E = hf (Planck's equation), where higher frequency electromagnetic waves (UV ~1200 THz) cost more NXT than lower frequency (IR ~340 THz), creating economic value directly tied to physical energy
-  - **Spectral Diversity Consensus**: Validates messages across 6 spectral regions (Ultraviolet, Violet, Blue, Green, Yellow, Infrared) requiring 5/6 region coverage (83% spectral diversity) for security. Includes region rotation mechanism ensuring all validators participate fairly over time
-  - **Wave Interference DAG**: Messages linked via interference pattern hashing instead of cryptographic hashing; validates parent-child relationships through wave superposition alignment, checking every parent for interference consistency
-  - **Security Advantages**: Quantum-resistant (based on Heisenberg uncertainty, no-cloning theorem, information-theoretic security) vs vulnerable SHA-256; battery-efficient mathematical wave simulation on mobile devices vs power-hungry proof-of-work mining
-  - **Economic Distribution**: 60% system revenue, 40% to validators proportionally; costs scale 1 NXT = 100 smallest units with physics-based pricing (UV messages ~2 NXT, visible ~0.8-1 NXT, IR ~0.8 NXT)
-  - **Integration**: Fully integrated with NXT payment layer via `wavelength_messaging_integration.py`; validator registration, spectral region assignment, balance checking, NXT transfers, reward distribution, and message DAG management
-  - **Interactive Dashboard**: `wavelength_economics_dashboard.py` with 5 tabs: Physics vs Hashing comparison, Wave Interference Demo (live electromagnetic simulations), Economic Pricing Model (E=hf calculator), Live Message Validation, and Spectral Diversity visualization
-  - **Security Hardening**: Explicit distinct region verification (prevents region starvation), all-parent interference validation (strengthens DAG integrity), deterministic rotation (fair validator participation), comprehensive error checking (security violations fail loudly)
-  - **Implementation Files**: `wavelength_validator.py` (Maxwell equations, interference patterns), `wavelength_economics_dashboard.py` (interactive UI), `wavelength_messaging_integration.py` (payment + consensus integration)
+**Mobile DAG Messaging System**: A production-ready mobile-optimized messaging platform built on the wavelength-economic validation layer. Features include message composition with spectral region selection, real-time E=hf cost estimation, interactive DAG visualization, multi-parent message selection, an inbox with advanced filtering, and seamless NXT payment integration.
 
-**Mobile DAG Messaging System - PRODUCTION-READY**: A complete mobile-optimized messaging platform built on the wavelength-economic validation layer, implementing all 6 core features:
-  - **Message Composition**: Intuitive UI for creating messages with spectral region selection (all 8 regions: UV, Violet, Blue, Green, Yellow, Orange, Red, Infrared), recipient selection, and optional parent message linking for multi-parent DAG chains
-  - **Real-time Cost Estimation**: Live E=hf physics-based pricing calculator showing quantum energy costs; displays frequency (THz), quantum base cost, and total NXT cost before sending; unified pricing model ensures preview cost matches actual ledger charge
-  - **Interactive DAG Visualization**: NetworkX-powered graph rendering shows message chains, parent-child relationships, and DAG structure with interactive controls for viewing message dependencies
-  - **Parent Message Selection**: Build complex DAG structures by selecting multiple parent messages, enabling multi-parent message chains for improved message validation through wave interference patterns
-  - **Inbox with Advanced Filtering**: View sent/received messages with filters for direction (All/Sent/Received), spectral region (All or specific region), and sorting (Newest First/Oldest First/Lowest Cost/Highest Cost); displays full physics metadata (wavelength, frequency, cost, interference hash)
-  - **NXT Payment Integration**: Seamless integration with native token system for balance checking, cost deduction (1 NXT = 100 units), and validator reward distribution (60% system, 40% validators)
-  - **Recent Optimizations (Nov 2025)**: Fixed Infrared dropdown bug (removed [:6] slice), implemented unified E=hf pricing model (BASE_SCALE=1e21) across UI and backend eliminating 35x cost discrepancy, added error handling for cost estimation failures, improved "All" filter logic for inbox
-  - **Implementation File**: `mobile_dag_messaging.py` (576 lines, production-tested)
+**Layer 1 Blockchain Simulator**: Mocks a complete Layer 1 chain with multiple consensus mechanisms (PoS, PoW, BFT, DPoS), real-time transaction processing, validator networks, and block lifecycle. Includes visual stress testing scenarios.
 
-**Secure Messaging Integration**: Wavelength cryptography is integrated for secure message transmission via email, SMS, or in-app notifications, with user-friendly compose and key management.
-
-**User Guidance System**: Provides "How to Use" guides, documentation, and quick help icons via `app_info_content.py` for all major modules.
-
-**Layer 1 Blockchain Simulator**: Mocks a complete Layer 1 chain with multiple consensus mechanisms (PoS, PoW, BFT, DPoS), real-time transaction processing, validator networks, and block lifecycle. Includes visual stress testing scenarios (High TPS, Network Partition, Validator Failures, 51% Attack).
-
-**Proof of Spectrum (PoS) Consensus - Phase 1 Foundation**: A wavelength-inspired blockchain consensus framework where validators are assigned to spectral regions with different cryptographic hash algorithms, requiring signatures from multiple regions combined through wave interference.
+**Proof of Spectrum (PoS) Consensus**: A wavelength-inspired blockchain consensus framework where validators are assigned to spectral regions with different cryptographic hash algorithms, requiring signatures from multiple regions combined through wave interference.
 
 **GhostDAG Ecosystem Optimization**: Implements DAG and GhostDAG for parallel block processing (PHANTOM protocol) in blockchain consensus, and a universal DAG optimizer for dependency resolution and parallel execution across various ecosystem components.
 
-**Nexus Consensus Engine - Revolutionary Unified Consensus**: A groundbreaking blockchain consensus mechanism integrating three independent security/economic systems into one cohesive framework:
-  - **GhostDAG Layer**: Parallel block processing via DAG structure (PHANTOM protocol) for high-throughput consensus without orphaned blocks
-  - **Proof of Spectrum Layer**: Spectral diversity security requiring 83% spectral coverage (5/6 regions: UV, Violet, Blue, Green, Yellow, IR) with stake-weighted validator selection within each region
-  - **Nexus Economic Layer**: AI-optimized system health S(t) = f(H, M, D) drives dynamic block rewards, creating wealth-building aligned with network health
-  - **Contribution Tracking**: Validators earn H (human governance), M (machine computation), D (data provision) scores that update validator stakes, influencing selection probability while maintaining spectral diversity
-  - **Block Reward Distribution**: 60% to block creator, 40% to validators weighted by contribution; uses round() with minimum 1 unit enforcement to prevent zero allocations; mints real NXT tokens via `token_system.mint_reward()`
-  - **Community Governance**: Contribution-weighted voting with 67% approval threshold and 10% max weight per validator (anti-centralization)
-  - **Economic Incentives**: Contribution tracking happens BEFORE minting to preserve AI optimization feedback loop even if mint fails; rewards reconcile rounding deltas ensuring total equals declared block reward
-  - **Integration Flow**: Contributions → Update stakes → Spectral selection (stake-weighted) → Block creation → System health calculation → Reward distribution → NXT minting → Governance weights
-  - **Visualization Dashboard**: Interactive Streamlit UI (`nexus_consensus_dashboard.py`) with 5 tabs: Consensus Overview, Validator Network, Economic Metrics, Governance, and Live Simulation demonstrating full consensus lifecycle
+**Nexus Consensus Engine**: A unified blockchain consensus mechanism integrating GhostDAG (parallel block processing), Proof of Spectrum (spectral diversity security with stake-weighted selection), and Nexus Economic Layer (AI-optimized system health drives dynamic block rewards). It includes contribution tracking for validators (H, M, D scores), contribution-weighted block reward distribution, and community governance.
 
-**DEX (Decentralized Exchange) - Layer 2 Integration**: An automated market maker (AMM) with ERC-20-like token standard, constant product formula, liquidity pools, and swap mechanisms. **NXT-Exclusive Base Currency**: All trading pairs must be TOKEN/NXT format (NXT is the exclusive base currency). Uses NativeTokenAdapter to bridge DEX with the native payment layer, ensuring NXT balances and transfers interact with the Layer 1 NativeTokenSystem. Trading fees (0.3%) collected from NXT side of swaps are routed to VALIDATOR_POOL via DEX_FEES account, creating economic flow from DEX activity to validators. UI enforces TOKEN/NXT pairing, queries NXT balances from native system, and handles NXT transfers via adapter rather than ERC-20 Token class. Provides interactive UI for swaps, liquidity management, and analytics.
+**DEX (Decentralized Exchange) - Layer 2 Integration**: An automated market maker (AMM) with an ERC-20-like token standard, constant product formula, liquidity pools, and swap mechanisms. **NXT-Exclusive Base Currency**: All trading pairs must be TOKEN/NXT. It uses NativeTokenAdapter to bridge with the native payment layer, with trading fees routed to VALIDATOR_POOL.
 
-**Enhanced Validator Economics**: A staking and delegation system with proportional reward distribution, configurable commission rates, unbonding periods, and slashing conditions. Includes a validator reputation system and economic modeling for profitability.
+**Enhanced Validator Economics**: A staking and delegation system with proportional reward distribution, configurable commission rates, unbonding periods, and slashing conditions. Includes a validator reputation system and economic modeling.
 
-**Native Payment Layer - NexusToken (NXT)**: A complete Layer 1 blockchain payment infrastructure with token economics (1,000,000 NXT total supply), a Proof-of-Work hybrid consensus (SHA-256 mining, dynamic difficulty, halving), and deflationary burn mechanics for messaging activities. Features multiple interactive dashboards for token economics, mining, messaging payments, account management, and analytics.
+**Native Payment Layer - NexusToken (NXT)**: A complete Layer 1 blockchain payment infrastructure with token economics (1,000,000 NXT total supply), a Proof-of-Work hybrid consensus (SHA-256 mining, dynamic difficulty, halving), and deflationary burn mechanics for messaging activities. Features multiple interactive dashboards.
 
-**Long-Term Predictive Analytics System**: Accumulates historical data from all NexusOS modules for 50-100 year forecasting using ensemble methods. Provides time-series forecasting, trend detection, CAGR calculations, and multi-horizon predictions with strategic insights.
+**Long-Term Predictive Analytics System**: Accumulates historical data from all NexusOS modules for 50-100 year forecasting using ensemble methods, providing time-series forecasting, trend detection, and multi-horizon predictions.
 
 ### External Dependencies
 

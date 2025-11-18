@@ -759,7 +759,8 @@ def main():
     elif selected_module == "💾 Scenario Manager":
         render_scenarios()
     elif selected_module == "📡 WNSP Protocol":
-        render_wnsp()
+        from wnsp_dashboard_v2 import render_wnsp_v2_dashboard
+        render_wnsp_v2_dashboard()
     elif selected_module == "👥 Administration" and AuthManager.has_role('admin'):
         render_admin()
 
