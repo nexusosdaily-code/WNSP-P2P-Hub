@@ -15,6 +15,7 @@ from auth import AuthManager
 from validation import ParameterValidator, validate_and_display
 from blockchain_viz import render_blockchain_dashboard
 from predictive_viz import render_predictive_analytics_dashboard
+from proof_of_spectrum_page import render_proof_of_spectrum
 
 st.set_page_config(
     page_title="NexusOS Advance Systems",
@@ -663,6 +664,7 @@ def main():
             "📊 Dashboard",
             "🔮 Predictive Analytics",
             "⛓️ Blockchain Simulator",
+            "🌈 Proof of Spectrum",
             "🔧 Task Orchestration",
             "🌐 Multi-Agent Networks",
             "📈 Economic Simulator",
@@ -705,6 +707,8 @@ def main():
         render_predictive_analytics_dashboard()
     elif selected_module == "⛓️ Blockchain Simulator":
         render_blockchain_dashboard()
+    elif selected_module == "🌈 Proof of Spectrum":
+        render_proof_of_spectrum()
     elif selected_module == "🔧 Task Orchestration":
         render_task_orchestration()
     elif selected_module == "🌐 Multi-Agent Networks":
