@@ -24,6 +24,7 @@ from nexus_consensus_dashboard import render_nexus_consensus_dashboard
 from wavelength_economics_dashboard import render_wavelength_economics_dashboard
 from mobile_dag_messaging import render_mobile_dag_messaging
 from mobile_connectivity_dashboard import show_mobile_connectivity_dashboard
+from web3_wallet_dashboard import render_web3_wallet_dashboard
 
 st.set_page_config(
     page_title="NexusOS Advance Systems",
@@ -670,6 +671,7 @@ def main():
     with col1:
         module_options = [
             "📊 Dashboard",
+            "🔐 Web3 Wallet",
             "📱 Mobile DAG Messaging",
             "📲 Mobile Connectivity",
             "🔮 Predictive Analytics",
@@ -719,6 +721,8 @@ def main():
         render_info_tabs('about_nexusos')
     elif selected_module == "📊 Dashboard":
         render_dashboard()
+    elif selected_module == "🔐 Web3 Wallet":
+        render_web3_wallet_dashboard()
     elif selected_module == "📱 Mobile DAG Messaging":
         render_mobile_dag_messaging()
     elif selected_module == "📲 Mobile Connectivity":
