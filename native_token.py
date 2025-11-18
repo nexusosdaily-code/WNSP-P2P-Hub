@@ -27,6 +27,13 @@ from enum import Enum
 import time
 import hashlib
 
+# Orbital Transition Engine - Physics-based token flow
+from orbital_transition_engine import (
+    orbital_engine, 
+    TransitionType as OrbitalTransitionType,
+    OrbitalTransition
+)
+
 
 class TransactionType(Enum):
     """Types of token transactions"""
@@ -103,12 +110,16 @@ class NativeTokenSystem:
     VALIDATOR_RESERVE = 30_000_000_000_000  # 30 trillion units = 300K NXT
     ECOSYSTEM_RESERVE = 20_000_000_000_000  # 20 trillion units = 200K NXT
     
-    # SUSTAINABLE Burn rates (in integer UNITS for 100+ year lifespan)
-    # Calibrated for ~1% annual burn at scale (verified by simulation)
-    # With 100M units/NXT, we can now support micro-payments
-    MESSAGE_BURN_RATE = 5_700  # 5,700 units = 0.000057 NXT per message
-    LINK_SHARE_BURN_RATE = 2_850  # 2,850 units = 0.0000285 NXT per link
-    VIDEO_SHARE_BURN_RATE = 11_400  # 11,400 units = 0.000114 NXT per video
+    # DEPRECATED: Old "burn" rates (kept for backwards compatibility)
+    # Now replaced by physics-based orbital transitions (n1 → n2 energy gaps)
+    MESSAGE_BURN_RATE = 5_700  # 5,700 units = 0.000057 NXT per message (LEGACY)
+    LINK_SHARE_BURN_RATE = 2_850  # 2,850 units = 0.0000285 NXT per link (LEGACY)
+    VIDEO_SHARE_BURN_RATE = 11_400  # 11,400 units = 0.000114 NXT per video (LEGACY)
+    
+    # NEW: Orbital transition-based pricing using Rydberg formula
+    # ΔE = 13.6 eV × Z² × (1/n₁² - 1/n₂²)
+    # Tokens flow into TRANSITION_RESERVE instead of being destroyed
+    USE_ORBITAL_TRANSITIONS = True  # Enable physics-based transitions
     
     # Transaction fees
     BASE_TRANSFER_FEE = 1_000  # 1,000 units = 0.00001 NXT per transfer
@@ -139,6 +150,10 @@ class NativeTokenSystem:
         
         # Ecosystem development fund
         self.create_account("ECOSYSTEM_FUND", initial_balance=self.ECOSYSTEM_RESERVE)
+        
+        # Transition reserve pool (collects orbital transition energy)
+        # Starts at zero, accumulates from message/transaction orbital transitions
+        self.create_account("TRANSITION_RESERVE", initial_balance=0)
         
         # Burn address (tokens sent here are burned)
         self.create_account("BURN_ADDRESS", initial_balance=0)
@@ -265,48 +280,207 @@ class NativeTokenSystem:
     
     def pay_for_message(self, from_address: str) -> Optional[TokenTransaction]:
         """
-        Pay and burn tokens for sending encrypted message.
-        Applies dynamic burn reduction if enabled.
-        """
-        # Calculate dynamic burn if enabled
-        base_burn_nxt = self.units_to_nxt(self.MESSAGE_BURN_RATE)
-        adjusted_burn_nxt = self.calculate_dynamic_burn(base_burn_nxt)
-        burn_amount = self.nxt_to_units(adjusted_burn_nxt)
+        Pay for sending encrypted message using orbital transition physics.
         
-        tx = self.burn(from_address, burn_amount, "Encrypted message payment")
-        if tx:
-            tx.tx_type = TransactionType.MESSAGE_PAYMENT
-        return tx
+        Physics: Electron drops from n=3 → n=2 (Hα line, 656.4nm red light)
+        Energy flows into TRANSITION_RESERVE instead of being destroyed.
+        """
+        if self.USE_ORBITAL_TRANSITIONS:
+            # Get pre-calculated cost (without executing transition yet)
+            cost_info = orbital_engine.get_transition_cost(OrbitalTransitionType.STANDARD_MESSAGE)
+            units_cost = cost_info['delta_e_units']
+            
+            # CHECK BALANCE FIRST (before any state mutations)
+            from_account = self.get_account(from_address)
+            if not from_account or not from_account.has_sufficient_balance(units_cost):
+                return None
+            
+            # Balance is sufficient - NOW execute the orbital transition
+            # Pass current reserve balance for stateless calculation
+            reserve_account = self.get_account("TRANSITION_RESERVE")
+            reserve_balance_before = reserve_account.balance if reserve_account else 0
+            
+            transition, units_cost = orbital_engine.execute_transition(
+                OrbitalTransitionType.STANDARD_MESSAGE,
+                user_address=from_address,
+                reserve_balance_before=reserve_balance_before,
+                block_height=None  # Could link to blockchain height
+            )
+            
+            # Deduct from user account and increment nonce
+            from_account.balance -= units_cost
+            from_account.nonce += 1
+            
+            # Add to TRANSITION_RESERVE
+            reserve_account = self.get_account("TRANSITION_RESERVE")
+            if reserve_account:
+                reserve_account.balance += units_cost
+            
+            # Create transaction record
+            tx = TokenTransaction(
+                tx_id=f"TX{self.tx_counter:08d}",
+                tx_type=TransactionType.MESSAGE_PAYMENT,
+                from_address=from_address,
+                to_address="TRANSITION_RESERVE",
+                amount=units_cost,
+                data={
+                    "reason": "Orbital transition: n=3→2 (Hα line)",
+                    "transition_type": transition.transition_type.display_name,
+                    "wavelength_nm": transition.wavelength_nm,
+                    "spectral_region": transition.spectral_region.name,
+                    "delta_e_nxt": transition.delta_e_nxt
+                }
+            )
+            self.tx_counter += 1
+            self.transactions.append(tx)
+            
+            return tx
+        else:
+            # LEGACY: Old burn mechanism
+            base_burn_nxt = self.units_to_nxt(self.MESSAGE_BURN_RATE)
+            adjusted_burn_nxt = self.calculate_dynamic_burn(base_burn_nxt)
+            burn_amount = self.nxt_to_units(adjusted_burn_nxt)
+            
+            tx = self.burn(from_address, burn_amount, "Encrypted message payment")
+            if tx:
+                tx.tx_type = TransactionType.MESSAGE_PAYMENT
+            return tx
     
     def pay_for_link_share(self, from_address: str) -> Optional[TokenTransaction]:
         """
-        Pay and burn tokens for sharing link.
-        Applies dynamic burn reduction if enabled.
-        """
-        # Calculate dynamic burn if enabled
-        base_burn_nxt = self.units_to_nxt(self.LINK_SHARE_BURN_RATE)
-        adjusted_burn_nxt = self.calculate_dynamic_burn(base_burn_nxt)
-        burn_amount = self.nxt_to_units(adjusted_burn_nxt)
+        Pay for sharing link using orbital transition physics.
         
-        tx = self.burn(from_address, burn_amount, "Link share payment")
-        if tx:
-            tx.tx_type = TransactionType.LINK_SHARE_PAYMENT
-        return tx
+        Physics: Electron drops from n=4 → n=2 (Hβ line, 486.2nm blue light)
+        Energy flows into TRANSITION_RESERVE instead of being destroyed.
+        """
+        if self.USE_ORBITAL_TRANSITIONS:
+            # Get pre-calculated cost (without executing transition yet)
+            cost_info = orbital_engine.get_transition_cost(OrbitalTransitionType.LINK_SHARE)
+            units_cost = cost_info['delta_e_units']
+            
+            # CHECK BALANCE FIRST (before any state mutations)
+            from_account = self.get_account(from_address)
+            if not from_account or not from_account.has_sufficient_balance(units_cost):
+                return None
+            
+            # Balance is sufficient - NOW execute the orbital transition
+            # Pass current reserve balance for stateless calculation
+            reserve_account = self.get_account("TRANSITION_RESERVE")
+            reserve_balance_before = reserve_account.balance if reserve_account else 0
+            
+            transition, units_cost = orbital_engine.execute_transition(
+                OrbitalTransitionType.LINK_SHARE,
+                user_address=from_address,
+                reserve_balance_before=reserve_balance_before,
+                block_height=None
+            )
+            
+            # Deduct from user account and increment nonce
+            from_account.balance -= units_cost
+            from_account.nonce += 1
+            
+            # Add to TRANSITION_RESERVE
+            reserve_account = self.get_account("TRANSITION_RESERVE")
+            if reserve_account:
+                reserve_account.balance += units_cost
+            
+            # Create transaction record
+            tx = TokenTransaction(
+                tx_id=f"TX{self.tx_counter:08d}",
+                tx_type=TransactionType.LINK_SHARE_PAYMENT,
+                from_address=from_address,
+                to_address="TRANSITION_RESERVE",
+                amount=units_cost,
+                data={
+                    "reason": "Orbital transition: n=4→2 (Hβ line)",
+                    "transition_type": transition.transition_type.display_name,
+                    "wavelength_nm": transition.wavelength_nm,
+                    "spectral_region": transition.spectral_region.name,
+                    "delta_e_nxt": transition.delta_e_nxt
+                }
+            )
+            self.tx_counter += 1
+            self.transactions.append(tx)
+            
+            return tx
+        else:
+            # LEGACY: Old burn mechanism
+            base_burn_nxt = self.units_to_nxt(self.LINK_SHARE_BURN_RATE)
+            adjusted_burn_nxt = self.calculate_dynamic_burn(base_burn_nxt)
+            burn_amount = self.nxt_to_units(adjusted_burn_nxt)
+            
+            tx = self.burn(from_address, burn_amount, "Link share payment")
+            if tx:
+                tx.tx_type = TransactionType.LINK_SHARE_PAYMENT
+            return tx
     
     def pay_for_video_share(self, from_address: str) -> Optional[TokenTransaction]:
         """
-        Pay and burn tokens for sharing video.
-        Applies dynamic burn reduction if enabled.
-        """
-        # Calculate dynamic burn if enabled
-        base_burn_nxt = self.units_to_nxt(self.VIDEO_SHARE_BURN_RATE)
-        adjusted_burn_nxt = self.calculate_dynamic_burn(base_burn_nxt)
-        burn_amount = self.nxt_to_units(adjusted_burn_nxt)
+        Pay for sharing video using orbital transition physics.
         
-        tx = self.burn(from_address, burn_amount, "Video share payment")
-        if tx:
-            tx.tx_type = TransactionType.VIDEO_SHARE_PAYMENT
-        return tx
+        Physics: Electron drops from n=5 → n=2 (434.1nm violet light)
+        Energy flows into TRANSITION_RESERVE instead of being destroyed.
+        """
+        if self.USE_ORBITAL_TRANSITIONS:
+            # Get pre-calculated cost (without executing transition yet)
+            cost_info = orbital_engine.get_transition_cost(OrbitalTransitionType.VIDEO_SHARE)
+            units_cost = cost_info['delta_e_units']
+            
+            # CHECK BALANCE FIRST (before any state mutations)
+            from_account = self.get_account(from_address)
+            if not from_account or not from_account.has_sufficient_balance(units_cost):
+                return None
+            
+            # Balance is sufficient - NOW execute the orbital transition
+            # Pass current reserve balance for stateless calculation
+            reserve_account = self.get_account("TRANSITION_RESERVE")
+            reserve_balance_before = reserve_account.balance if reserve_account else 0
+            
+            transition, units_cost = orbital_engine.execute_transition(
+                OrbitalTransitionType.VIDEO_SHARE,
+                user_address=from_address,
+                reserve_balance_before=reserve_balance_before,
+                block_height=None
+            )
+            
+            # Deduct from user account and increment nonce
+            from_account.balance -= units_cost
+            from_account.nonce += 1
+            
+            # Add to TRANSITION_RESERVE
+            reserve_account = self.get_account("TRANSITION_RESERVE")
+            if reserve_account:
+                reserve_account.balance += units_cost
+            
+            # Create transaction record
+            tx = TokenTransaction(
+                tx_id=f"TX{self.tx_counter:08d}",
+                tx_type=TransactionType.VIDEO_SHARE_PAYMENT,
+                from_address=from_address,
+                to_address="TRANSITION_RESERVE",
+                amount=units_cost,
+                data={
+                    "reason": "Orbital transition: n=5→2 (Balmer series)",
+                    "transition_type": transition.transition_type.display_name,
+                    "wavelength_nm": transition.wavelength_nm,
+                    "spectral_region": transition.spectral_region.name,
+                    "delta_e_nxt": transition.delta_e_nxt
+                }
+            )
+            self.tx_counter += 1
+            self.transactions.append(tx)
+            
+            return tx
+        else:
+            # LEGACY: Old burn mechanism
+            base_burn_nxt = self.units_to_nxt(self.VIDEO_SHARE_BURN_RATE)
+            adjusted_burn_nxt = self.calculate_dynamic_burn(base_burn_nxt)
+            burn_amount = self.nxt_to_units(adjusted_burn_nxt)
+            
+            tx = self.burn(from_address, burn_amount, "Video share payment")
+            if tx:
+                tx.tx_type = TransactionType.VIDEO_SHARE_PAYMENT
+            return tx
     
     def get_total_supply(self) -> int:
         """Get total possible supply"""
