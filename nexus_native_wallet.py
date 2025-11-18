@@ -30,6 +30,12 @@ from wnsp_protocol_v2 import (
 )
 from wavelength_validator import WavelengthValidator
 
+# Cryptography
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.backends import default_backend
+
 # Database
 import sqlalchemy as sa
 from sqlalchemy import create_engine, Column, String, Float, Integer, DateTime, Text, Boolean
@@ -312,6 +318,14 @@ class NexusNativeWallet:
         Returns:
             Transaction details with quantum proofs
         """
+        # Input validation - prevent negative amount exploit
+        if amount_nxt <= 0:
+            raise ValueError(f"Invalid amount: {amount_nxt}. Amount must be positive.")
+        if fee_nxt is not None and fee_nxt < 0:
+            raise ValueError(f"Invalid fee: {fee_nxt}. Fee must be non-negative.")
+        if amount_nxt > 1e12:  # Sanity check: max 1 trillion NXT
+            raise ValueError(f"Amount too large: {amount_nxt}")
+        
         # Get wallet
         wallet = self.db.query(NexusWallet).filter_by(address=from_address).first()
         if not wallet:
@@ -372,7 +386,7 @@ class NexusNativeWallet:
             amount_nxt=amount_nxt,
             fee_nxt=(tx.fee / 100.0),
             status='confirmed',
-            wave_signature=json.dumps(asdict(quantum_proof['wave_signature'])),
+            wave_signature=json.dumps(quantum_proof['wave_signature']),
             spectral_proof=json.dumps(quantum_proof['spectral_signatures']),
             interference_hash=quantum_proof['interference_hash'],
             energy_cost=quantum_proof['energy_cost']
@@ -632,29 +646,67 @@ class NexusNativeWallet:
         return private_key, public_key
     
     def _encrypt_private_key(self, private_key: str, password: str, public_key: Dict) -> str:
-        """Encrypt private key with quantum-resistant encryption"""
-        password_bytes = password.encode('utf-8')
-        salt = json.dumps(public_key['wave_signatures']).encode('utf-8')
+        """
+        Encrypt private key with AES-GCM authenticated encryption.
+        Returns: nonce || ciphertext (hex encoded, ciphertext includes auth tag)
+        """
+        # Use wavelength signature as salt for PBKDF2
+        salt = hashlib.sha256(
+            json.dumps(public_key['wave_signatures'], sort_keys=True).encode()
+        ).digest()
         
-        # PBKDF2 key derivation
-        key = hashlib.pbkdf2_hmac('sha512', password_bytes, salt, 100000)
+        # Derive 256-bit AES key using PBKDF2
+        kdf = PBKDF2HMAC(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=salt,
+            iterations=100000,
+            backend=default_backend()
+        )
+        aes_key = kdf.derive(password.encode('utf-8'))
         
-        # XOR encryption
-        pk_bytes = bytes.fromhex(private_key)
-        encrypted = bytes(a ^ b for a, b in zip(pk_bytes, key[:len(pk_bytes)]))
+        # Generate random nonce (96 bits for GCM)
+        nonce = os.urandom(12)
         
-        return encrypted.hex()
+        # Encrypt with AES-GCM (provides both confidentiality and integrity)
+        aesgcm = AESGCM(aes_key)
+        ciphertext = aesgcm.encrypt(nonce, private_key.encode('utf-8'), None)
+        
+        # ciphertext includes auth tag automatically
+        # Return: nonce || ciphertext (with embedded tag)
+        return nonce.hex() + ciphertext.hex()
     
     def _decrypt_private_key(self, encrypted_key: str, password: str, public_key: Dict) -> str:
-        """Decrypt private key"""
-        password_bytes = password.encode('utf-8')
-        salt = json.dumps(public_key['wave_signatures']).encode('utf-8')
-        key = hashlib.pbkdf2_hmac('sha512', password_bytes, salt, 100000)
+        """
+        Decrypt private key with AES-GCM authenticated decryption.
+        Raises: ValueError if ciphertext was tampered with or password incorrect
+        """
+        # Use same wavelength signature as salt
+        salt = hashlib.sha256(
+            json.dumps(public_key['wave_signatures'], sort_keys=True).encode()
+        ).digest()
         
-        encrypted_bytes = bytes.fromhex(encrypted_key)
-        decrypted = bytes(a ^ b for a, b in zip(encrypted_bytes, key[:len(encrypted_bytes)]))
+        # Derive AES key
+        kdf = PBKDF2HMAC(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=salt,
+            iterations=100000,
+            backend=default_backend()
+        )
+        aes_key = kdf.derive(password.encode('utf-8'))
         
-        return decrypted.hex()
+        # Extract nonce (first 12 bytes = 24 hex chars)
+        nonce = bytes.fromhex(encrypted_key[:24])
+        ciphertext = bytes.fromhex(encrypted_key[24:])
+        
+        # Decrypt and verify integrity
+        aesgcm = AESGCM(aes_key)
+        try:
+            plaintext = aesgcm.decrypt(nonce, ciphertext, None)
+            return plaintext.decode('utf-8')
+        except Exception as e:
+            raise ValueError(f"Decryption failed - invalid password or tampered key: {e}")
     
     def _generate_spectral_signature(self, address: str) -> Dict[str, str]:
         """Generate multi-spectral signatures"""
@@ -696,8 +748,19 @@ class NexusNativeWallet:
         h = 6.62607015e-34
         energy_cost = h * wave_sig.frequency * 1e19
         
+        # Convert WaveProperties to JSON-serializable dict
+        wave_dict = {
+            'wavelength': wave_sig.wavelength,
+            'frequency': wave_sig.frequency,
+            'amplitude': wave_sig.amplitude,
+            'phase': wave_sig.phase,
+            'polarization': wave_sig.polarization,
+            'spectral_region': wave_sig.spectral_region.name if hasattr(wave_sig.spectral_region, 'name') else str(wave_sig.spectral_region),
+            'modulation_type': wave_sig.modulation_type.name if hasattr(wave_sig.modulation_type, 'name') else str(wave_sig.modulation_type)
+        }
+        
         return {
-            'wave_signature': wave_sig,
+            'wave_signature': wave_dict,
             'spectral_signatures': spectral_sigs,
             'interference_hash': interference_hash,
             'energy_cost': float(energy_cost)
