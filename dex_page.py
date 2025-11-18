@@ -60,17 +60,24 @@ def initialize_dex():
 def render_swap_interface(dex: DEXEngine):
     """Render token swap interface"""
     st.subheader("💱 Swap Tokens")
+    st.info("💡 All trades use NXT as base currency")
     
     user = st.session_state.user_address
     
     col1, col2 = st.columns(2)
     
+    # Build full token list including NXT
+    all_tokens = list(dex.tokens.keys()) + ["NXT"]
+    
     with col1:
         st.markdown("**From**")
-        available_tokens = list(dex.tokens.keys())
-        input_token = st.selectbox("Token", available_tokens, key="swap_input_token")
+        input_token = st.selectbox("Token", all_tokens, key="swap_input_token")
         
-        balance = dex.tokens[input_token].balance_of(user)
+        # Get balance from appropriate source
+        if input_token == "NXT":
+            balance = dex.nxt_adapter.get_balance(user) if dex.nxt_adapter else 0.0
+        else:
+            balance = dex.tokens[input_token].balance_of(user)
         st.caption(f"Balance: {balance:.4f} {input_token}")
         
         input_amount = st.number_input(
@@ -84,10 +91,14 @@ def render_swap_interface(dex: DEXEngine):
     
     with col2:
         st.markdown("**To**")
-        output_tokens = [t for t in available_tokens if t != input_token]
+        output_tokens = [t for t in all_tokens if t != input_token]
         output_token = st.selectbox("Token", output_tokens, key="swap_output_token")
         
-        output_balance = dex.tokens[output_token].balance_of(user)
+        # Get balance from appropriate source
+        if output_token == "NXT":
+            output_balance = dex.nxt_adapter.get_balance(user) if dex.nxt_adapter else 0.0
+        else:
+            output_balance = dex.tokens[output_token].balance_of(user)
         st.caption(f"Balance: {output_balance:.4f} {output_token}")
         
         # Get quote
@@ -135,12 +146,14 @@ def render_liquidity_interface(dex: DEXEngine):
     
     with tab1:
         st.markdown("**Add Liquidity to Pool**")
+        st.info("💡 All pools must include NXT as one token")
         
         col1, col2 = st.columns(2)
         
         with col1:
+            # Only show ERC-20 tokens for token_a (NXT is always token_b)
             available_tokens = list(dex.tokens.keys())
-            token_a = st.selectbox("Token A", available_tokens, key="liq_token_a")
+            token_a = st.selectbox("Token", available_tokens, key="liq_token_a")
             balance_a = dex.tokens[token_a].balance_of(user)
             st.caption(f"Balance: {balance_a:.4f}")
             amount_a = st.number_input(
@@ -153,9 +166,10 @@ def render_liquidity_interface(dex: DEXEngine):
             )
         
         with col2:
-            token_b_options = [t for t in available_tokens if t != token_a]
-            token_b = st.selectbox("Token B", token_b_options, key="liq_token_b")
-            balance_b = dex.tokens[token_b].balance_of(user)
+            # Token B is always NXT
+            token_b = "NXT"
+            st.markdown(f"**{token_b} (Base Currency)**")
+            balance_b = dex.nxt_adapter.get_balance(user) if dex.nxt_adapter else 0.0
             st.caption(f"Balance: {balance_b:.4f}")
             amount_b = st.number_input(
                 f"Amount {token_b}",
@@ -166,8 +180,8 @@ def render_liquidity_interface(dex: DEXEngine):
                 key="liq_amount_b"
             )
         
-        # Check if pool exists
-        pool_id = f"{min(token_a, token_b)}-{max(token_a, token_b)}"
+        # Check if pool exists (always TOKEN-NXT format)
+        pool_id = f"{token_a}-{token_b}"
         pool_exists = pool_id in dex.pools
         
         if pool_exists:
@@ -179,22 +193,30 @@ def render_liquidity_interface(dex: DEXEngine):
             if amount_a <= 0 or amount_b <= 0:
                 st.error("Please enter valid amounts")
             else:
-                if pool_exists:
-                    pool = dex.pools[pool_id]
-                    success, lp_tokens, message = pool.add_liquidity(user, amount_a, amount_b)
-                    
+                # Use DEX create_pool which handles NXT properly
+                if not pool_exists:
+                    success, message = dex.create_pool(token_a, token_b, amount_a, amount_b, user)
                     if success:
-                        # Transfer tokens
-                        dex.tokens[token_a].transfer(user, pool_id, amount_a)
-                        dex.tokens[token_b].transfer(user, pool_id, amount_b)
                         st.success(f"✅ {message}")
                         st.rerun()
                     else:
                         st.error(f"❌ {message}")
                 else:
-                    # Create new pool
-                    success, message = dex.create_pool(token_a, token_b, amount_a, amount_b, user)
+                    # Add to existing pool
+                    pool = dex.pools[pool_id]
+                    success, lp_tokens, message = pool.add_liquidity(user, amount_a, amount_b)
+                    
                     if success:
+                        # Transfer ERC-20 token
+                        if not dex.tokens[token_a].transfer(user, pool_id, amount_a):
+                            st.error(f"Failed to transfer {token_a}")
+                            return
+                        
+                        # Transfer NXT via adapter
+                        if dex.nxt_adapter and not dex.nxt_adapter.transfer(user, pool_id, amount_b):
+                            st.error(f"Failed to transfer NXT")
+                            return
+                        
                         st.success(f"✅ {message}")
                         st.rerun()
                     else:

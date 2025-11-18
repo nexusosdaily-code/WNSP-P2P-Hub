@@ -557,24 +557,39 @@ class DEXEngine:
         expected_output, _ = pool.calculate_output_amount(input_token, input_amount)
         min_output = expected_output * (1 - slippage_tolerance)
         
-        # Execute swap in pool (updates reserves)
+        # Execute swap in pool (pool.swap() already applies fees in AMM formula)
         success, output_amount, message = pool.swap(input_token, input_amount, min_output)
         
         if success:
+            # Calculate fee that was applied in the swap (already factored into output_amount)
+            # Fee is taken from input side in the AMM formula
+            fee_amount_nxt = input_amount * pool.fee_rate
+            fee_units = self.nxt_adapter.nxt_to_units(fee_amount_nxt)
+            
             # Transfer input tokens from user to pool
             if is_input_nxt:
-                # User pays NXT → Pool
+                # User pays NXT → Pool (includes fee that stays in pool)
                 if not self.nxt_adapter.transfer(user, pool_id, input_amount):
                     return False, 0.0, "Failed to transfer NXT to pool"
+                
+                # Extract fee from pool to DEX_FEES (fee is already in pool reserves)
+                if fee_units > 0:
+                    if not self.nxt_adapter.transfer_units(pool_id, "DEX_FEES", fee_units):
+                        return False, 0.0, "Failed to collect fee from pool"
             else:
                 # User pays TOKEN → Pool
                 input_token_obj = self.tokens[input_token]
                 if not input_token_obj.transfer(user, pool_id, input_amount):
                     return False, 0.0, f"Failed to transfer {input_token} to pool"
+                
+                # For TOKEN input, fee is in TOKEN which we can't route to validators
+                # This is a limitation - ideally convert to NXT or handle differently
+                # For now, TOKEN fees stay in pool (benefit LPs)
+                fee_units = 0  # Don't route TOKEN fees
             
             # Transfer output tokens from pool to user
             if is_output_nxt:
-                # Pool pays NXT → User
+                # Pool pays NXT → User (output_amount already reduced by fee in AMM)
                 if not self.nxt_adapter.transfer(pool_id, user, output_amount):
                     return False, 0.0, "Failed to transfer NXT to user"
             else:
@@ -583,12 +598,7 @@ class DEXEngine:
                 if not output_token_obj.transfer(pool_id, user, output_amount):
                     return False, 0.0, f"Failed to transfer {output_token} to user"
             
-            # Calculate and route fees to validator pool
-            # Fees are taken from the NXT side of the swap
-            fee_amount_nxt = input_amount * pool.fee_rate if is_input_nxt else output_amount * pool.fee_rate
-            fee_units = self.nxt_adapter.nxt_to_units(fee_amount_nxt)
-            
-            # Route fees to validator pool
+            # Route collected NXT fees to validator pool
             if fee_units > 0:
                 self.nxt_adapter.route_fee_to_validator_pool(fee_units)
                 self.total_fees_to_validators += fee_amount_nxt
