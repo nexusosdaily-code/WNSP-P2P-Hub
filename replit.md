@@ -43,9 +43,10 @@ NexusOS Advance Systems is a revolutionary Layer 1 blockchain platform that util
 ### UI/UX Decisions
 The platform features interactive dashboards built with Streamlit and Plotly for real-time visualization and user engagement. Key dashboards include a 6-tab WNSP v2.0 dashboard, an economics dashboard, a DAG network view, and mobile-optimized interfaces. Color-coded alerts and visual stress testing scenarios enhance user experience.
 
-**Nexus AI Integration**: Every research component includes comprehensive AI-powered analysis and reporting through two integrated systems:
+**Nexus AI Integration**: Every research component includes comprehensive AI-powered analysis and reporting through three integrated systems:
 1. **Nexus AI Reports** - Generate user-friendly explanations, insights, and recommendations for researchers testing theories
-2. **Nexus AI Governance** - AI that learns from research activities, governs forward adaptation for civilization sustainability, and ensures F_floor (basic human living standards minimum from the Nexus equation) is never compromised
+2. **Nexus AI Governance** - AI that learns from research activities, governs forward adaptation for civilization sustainability, and manages DAG agents throughout the ecosystem
+3. **Reserve Pool Telemetry** - Monitors burn/issuance flows and projects F_floor coverage to ensure basic human living standards (F_floor from Nexus equation) are never compromised through reserve pool management
 
 ### Technical Implementations & Feature Specifications
 **1. Economic Simulation Engine:** A comprehensive system simulator based on the Nexus equation, featuring self-regulating issuance/burn mechanics, PID feedback control, multi-factor ecosystem health calculation, and conservation constraints. It uses differential equations, Numba optimization, SQLAlchemy for persistence, and various analysis tools like Monte Carlo simulations.
