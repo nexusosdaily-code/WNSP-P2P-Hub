@@ -1472,6 +1472,14 @@ def render_simulation():
         
         fig.update_layout(height=500, showlegend=False)
         st.plotly_chart(fig, width='stretch')
+        
+        # Nexus AI Research Report for Researchers
+        st.divider()
+        from nexus_ai import render_nexus_ai_button
+        render_nexus_ai_button('economic_simulator', {
+            **st.session_state.params,
+            'results': df.to_dict('list') if len(df) < 1000 else None
+        })
 
 def render_advanced_analysis():
     st.header("Advanced Analysis Tools")

@@ -435,6 +435,20 @@ def render_dex_page():
     
     with tab5:
         render_analytics(dex)
+    
+    # Nexus AI Research Report for Researchers
+    st.divider()
+    from nexus_ai import render_nexus_ai_button
+    
+    # Get sample DEX data for AI analysis
+    pools = list(dex.pools.values())
+    sample_pool = pools[0] if pools else None
+    render_nexus_ai_button('dex', {
+        'pair': f"{sample_pool.token1}/{sample_pool.token2}" if sample_pool else 'NXT/TOKEN',
+        'liquidity': sample_pool.reserve1 + sample_pool.reserve2 if sample_pool else 0,
+        'volume': sample_pool.total_volume if sample_pool else 0,
+        'price_impact': 0.5  # Sample value
+    })
 
 
 if __name__ == "__main__":

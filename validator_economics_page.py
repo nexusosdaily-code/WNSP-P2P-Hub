@@ -431,6 +431,19 @@ def render_validator_economics_page():
     
     with tab5:
         render_profitability_calculator(economy)
+    
+    # Nexus AI Research Report for Researchers
+    st.divider()
+    from nexus_ai import render_nexus_ai_button
+    
+    # Get validator data for AI analysis
+    apy = economy.calculate_apy()
+    render_nexus_ai_button('validator_economics', {
+        'stake': economy.total_staked,
+        'rewards': economy.total_rewards_distributed,
+        'apr': apy,
+        'uptime': 98.5  # Sample uptime value
+    })
 
 
 if __name__ == "__main__":

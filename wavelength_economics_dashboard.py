@@ -49,6 +49,16 @@ def render_wavelength_economics_dashboard():
     
     with tabs[4]:
         render_spectral_diversity()
+    
+    # Nexus AI Research Report for Researchers
+    st.divider()
+    from nexus_ai import render_nexus_ai_button
+    render_nexus_ai_button('wavelength_economics', {
+        'wavelength': 550,  # Default green wavelength
+        'region': 'Green',
+        'cost': 7500,
+        'modulation': 'OOK'
+    })
 
 
 def render_physics_vs_hashing():
