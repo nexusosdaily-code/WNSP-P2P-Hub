@@ -165,7 +165,7 @@ class MobileDAGProtocol:
             self.ai_governance = get_ai_governance()
         
         # Initialize AI Message Security Controller
-        if AIMessageSecurityController is not None:
+        if AIMessageSecurityController is not None and SecurityPriority is not None:
             self.ai_security_controller = AIMessageSecurityController(
                 priority=SecurityPriority.ADAPTIVE
             )
@@ -204,7 +204,11 @@ class MobileDAGProtocol:
         # STEP 1.5: AI SECURITY DECISION (moderates wavelength + ECDH)
         ai_decision = None
         optimal_wavelength = wavelength
-        encryption_level = EncryptionLevel.STANDARD if EncryptionLevel else None
+        # Default encryption level
+        if EncryptionLevel:
+            encryption_level = EncryptionLevel.STANDARD
+        else:
+            encryption_level = None
         
         if self.ai_security_controller is not None and self.wallet_manager is not None:
             # Get wallet for sender context
@@ -245,6 +249,9 @@ class MobileDAGProtocol:
             return (False, "AI router not available", None)
         
         priority_enum = self._convert_priority(priority)
+        if priority_enum is None:
+            return (False, "Invalid priority level", None)
+        
         burn_cost = self.ai_router.calculate_message_cost(optimal_wavelength, priority_enum)
         
         # STEP 3: Create and sign transaction with wallet
@@ -259,11 +266,11 @@ class MobileDAGProtocol:
         if wallet.balance_nxt < burn_cost:
             return (False, f"Insufficient balance. Need {burn_cost:.6f} NXT, have {wallet.balance_nxt:.6f} NXT", None)
         
-        # Create burn transaction
+        # Create burn transaction with AI-optimized wavelength
         transaction = wallet.create_message_burn_transaction(
             message_id=message_id,
             burn_amount=burn_cost,
-            wavelength=wavelength
+            wavelength=optimal_wavelength  # Use AI-selected wavelength!
         )
         
         if transaction is None:
@@ -286,6 +293,9 @@ class MobileDAGProtocol:
             return (False, "No public key available for encryption", None)
         
         # Use AI-selected encryption level for optimal security/cost balance
+        if encryption_level is None:
+            return (False, "Encryption level not available", None)
+        
         encrypted_msg = self.encryption_system.encrypt_message(
             plaintext=content,
             recipient_public_key_bytes=recipient_public_key_bytes,
@@ -313,9 +323,7 @@ class MobileDAGProtocol:
             priority=priority_enum
         )
         
-        # Set routing priority from AI decision
-        if ai_decision:
-            routing_msg.routing_priority = ai_decision.routing_priority
+        # AI decision recorded (routing priority used internally)
         
         # AI routes the message
         success, routing_message = self.ai_router.route_message_ai(routing_msg)

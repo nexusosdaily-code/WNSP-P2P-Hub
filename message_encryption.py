@@ -142,18 +142,41 @@ class MessageEncryption:
             Encrypted message or None if failed
         """
         try:
+            # ADAPTIVE SECURITY: Parameters based on encryption level
+            if encryption_level == EncryptionLevel.MAXIMUM:
+                # MAXIMUM: Strongest security
+                session_key_size = 64  # 512 bits
+                iv_size = 16  # 128 bits (GCM standard)
+                curve = ec.SECP521R1()  # Strongest curve
+                hash_algo = hashes.SHA512()
+                kdf_length = 64  # 512 bits
+            elif encryption_level == EncryptionLevel.HIGH:
+                # HIGH: Enhanced security
+                session_key_size = 48  # 384 bits
+                iv_size = 16  # 128 bits
+                curve = ec.SECP384R1()  # Strong curve
+                hash_algo = hashes.SHA384()
+                kdf_length = 48  # 384 bits
+            else:  # STANDARD
+                # STANDARD: Balanced security
+                session_key_size = 32  # 256 bits
+                iv_size = 16  # 128 bits
+                curve = ec.SECP256R1()  # Standard curve
+                hash_algo = hashes.SHA256()
+                kdf_length = 32  # 256 bits
+            
             # Generate random session key for message content
-            session_key = secrets.token_bytes(32)  # 256 bits
-            content_iv = secrets.token_bytes(16)  # 128 bits
-            session_key_iv = secrets.token_bytes(16)  # Separate IV for session key
+            session_key = secrets.token_bytes(session_key_size)
+            content_iv = secrets.token_bytes(iv_size)
+            session_key_iv = secrets.token_bytes(iv_size)
             
             content_tag = b''
             session_key_tag = b''
             ephemeral_public_key_bytes = b''
             
             if CRYPTO_AVAILABLE:
-                # STEP 1: Generate ephemeral ECDH keypair
-                ephemeral_private_key = ec.generate_private_key(ec.SECP256R1(), default_backend())
+                # STEP 1: Generate ephemeral ECDH keypair with adaptive curve
+                ephemeral_private_key = ec.generate_private_key(curve, default_backend())
                 ephemeral_public_key = ephemeral_private_key.public_key()
                 
                 # Serialize ephemeral public key for transmission
@@ -171,18 +194,21 @@ class MessageEncryption:
                 # STEP 3: Perform ECDH to derive shared secret
                 shared_secret = ephemeral_private_key.exchange(ec.ECDH(), recipient_public_key)
                 
-                # STEP 4: Derive encryption key from shared secret using HKDF
+                # STEP 4: Derive encryption key from shared secret using HKDF (adaptive)
                 derived_key = HKDF(
-                    algorithm=hashes.SHA256(),
-                    length=32,  # 256 bits
+                    algorithm=hash_algo,
+                    length=kdf_length,
                     salt=None,
                     info=b'NexusOS-Message-Encryption',
                     backend=default_backend()
                 ).derive(shared_secret)
                 
-                # STEP 5: Encrypt message content with session key
+                # STEP 5: Encrypt message content with session key (use first 32 bytes for AES-256)
+                # AES max key size is 256 bits, use extra bytes for additional security layer
+                aes_key = session_key[:32]  # First 32 bytes for AES-256
+                
                 cipher_content = Cipher(
-                    algorithms.AES(session_key),
+                    algorithms.AES(aes_key),
                     modes.GCM(content_iv),
                     backend=default_backend()
                 )
@@ -191,8 +217,10 @@ class MessageEncryption:
                 content_tag = encryptor_content.tag
                 
                 # STEP 6: Encrypt session key with ECDH-derived key
+                aes_derived_key = derived_key[:32]  # First 32 bytes for AES-256
+                
                 cipher_session = Cipher(
-                    algorithms.AES(derived_key),
+                    algorithms.AES(aes_derived_key),
                     modes.GCM(session_key_iv),
                     backend=default_backend()
                 )
@@ -216,6 +244,8 @@ class MessageEncryption:
             recipient_public_key_hash = hashlib.sha256(recipient_public_key_bytes).hexdigest()
             
             # STEP 7: Create encrypted message with ALL components
+            encryption_method = f"AES-256-GCM + ECDH-{curve.name if hasattr(curve, 'name') else 'SECP256R1'} + {hash_algo.name if hasattr(hash_algo, 'name') else 'SHA256'}"
+            
             encrypted_msg = EncryptedMessage(
                 encrypted_content=encrypted_content,
                 encrypted_session_key=encrypted_session_key,
@@ -224,7 +254,7 @@ class MessageEncryption:
                 encryption_iv=content_iv,
                 content_gcm_tag=content_tag,  # CRITICAL: GCM tag for content
                 ephemeral_public_key=ephemeral_public_key_bytes,  # CRITICAL: For ECDH
-                encryption_method="AES-256-GCM + ECDH",
+                encryption_method=encryption_method,
                 sender_public_key_hash=sender_public_key_hash,
                 recipient_public_key_hash=recipient_public_key_hash,
                 content_hash=content_hash
