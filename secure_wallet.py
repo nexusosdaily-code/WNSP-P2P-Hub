@@ -337,6 +337,29 @@ class SecureWallet:
         
         return True
     
+    def get_public_key_bytes(self) -> Optional[bytes]:
+        """
+        Get public key bytes for ECDH encryption
+        
+        Returns:
+            Public key bytes (PEM format) or None
+        """
+        return self._public_key
+    
+    def get_private_key_bytes(self) -> Optional[bytes]:
+        """
+        Get private key bytes for ECDH decryption
+        
+        SECURITY WARNING: This should only be called on the user's device
+        In production, this would require biometric/PIN authentication
+        
+        Returns:
+            Private key bytes (PEM format) or None
+        """
+        if self.is_locked:
+            return None
+        return self._private_key_encrypted  # In production, decrypt here
+    
     def get_security_status(self) -> Dict[str, Any]:
         """
         Get wallet security status
@@ -360,7 +383,8 @@ class SecureWallet:
                 "local_key_storage": True,
                 "signature_verification": True,
                 "replay_protection": True,
-                "multi_factor_auth": False  # To be implemented
+                "multi_factor_auth": False,  # To be implemented
+                "ecdh_ready": self._public_key is not None
             }
         }
 

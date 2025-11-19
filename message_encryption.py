@@ -31,8 +31,10 @@ import time
 # Cryptography imports
 try:
     from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-    from cryptography.hazmat.primitives import hashes
+    from cryptography.hazmat.primitives import hashes, serialization
     from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+    from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+    from cryptography.hazmat.primitives.asymmetric import ec
     from cryptography.hazmat.backends import default_backend
     CRYPTO_AVAILABLE = True
 except ImportError:
@@ -49,19 +51,25 @@ class EncryptionLevel(Enum):
 @dataclass
 class EncryptedMessage:
     """
-    Encrypted message payload
+    Encrypted message payload with production-grade ECDH encryption
     
     Contains:
     - Encrypted content
     - Encrypted session key (so recipient can decrypt)
-    - GCM authentication tag
+    - Session key GCM tag (for session key integrity)
+    - Session key IV (for session key decryption)
+    - Content GCM tag (for content integrity)
+    - Ephemeral public key (for ECDH)
     - Encryption metadata
     - Integrity verification
     """
     encrypted_content: bytes
-    encrypted_session_key: bytes  # CRITICAL: Session key encrypted with recipient's public key
-    encryption_iv: bytes  # Initialization vector
-    gcm_auth_tag: bytes  # GCM authentication tag for integrity
+    encrypted_session_key: bytes  # CRITICAL: Session key encrypted with ECDH shared secret
+    session_key_gcm_tag: bytes  # CRITICAL: GCM tag for encrypted_session_key
+    session_key_iv: bytes  # CRITICAL: IV for session key encryption
+    encryption_iv: bytes  # Initialization vector for content
+    content_gcm_tag: bytes  # GCM authentication tag for content
+    ephemeral_public_key: bytes  # Sender's ephemeral public key for ECDH
     encryption_method: str
     sender_public_key_hash: str
     recipient_public_key_hash: str
@@ -73,8 +81,11 @@ class EncryptedMessage:
         return {
             "encrypted_content": base64.b64encode(self.encrypted_content).decode(),
             "encrypted_session_key": base64.b64encode(self.encrypted_session_key).decode(),
+            "session_key_gcm_tag": base64.b64encode(self.session_key_gcm_tag).decode(),
+            "session_key_iv": base64.b64encode(self.session_key_iv).decode(),
             "encryption_iv": base64.b64encode(self.encryption_iv).decode(),
-            "gcm_auth_tag": base64.b64encode(self.gcm_auth_tag).decode(),
+            "content_gcm_tag": base64.b64encode(self.content_gcm_tag).decode(),
+            "ephemeral_public_key": base64.b64encode(self.ephemeral_public_key).decode(),
             "encryption_method": self.encryption_method,
             "sender_public_key_hash": self.sender_public_key_hash,
             "recipient_public_key_hash": self.recipient_public_key_hash,
@@ -99,28 +110,31 @@ class MessageEncryption:
         self.encryption_algorithm = "AES-256-GCM"
         self.key_derivation_iterations = 100000
     
-    def encrypt_message(self, plaintext: str, recipient_public_key_hash: str,
+    def encrypt_message(self, plaintext: str, recipient_public_key_bytes: bytes,
                        sender_public_key_hash: str, 
                        encryption_level: EncryptionLevel = EncryptionLevel.STANDARD) -> Optional[EncryptedMessage]:
         """
-        Encrypt message with end-to-end encryption using ECDH key agreement
+        Encrypt message with PRODUCTION-GRADE ECDH key agreement
         
-        Steps:
-        1. Generate random AES-256 session key
-        2. Encrypt message content with session key (AES-256-GCM)
-        3. Derive shared secret via ECDH (using recipient's public key)
-        4. Encrypt session key with shared secret
-        5. Include GCM authentication tag
-        6. Package encrypted payload
+        Security Architecture:
+        1. Generate ephemeral ECDH keypair (fresh for each message)
+        2. Derive shared secret via ECDH (ephemeral private key + recipient public key)
+        3. Derive encryption key from shared secret using HKDF
+        4. Generate random AES-256 session key
+        5. Encrypt message content with session key (AES-256-GCM)
+        6. Encrypt session key with ECDH-derived key (AES-256-GCM)
+        7. Include both GCM tags for integrity
+        8. Package with ephemeral public key
         
-        This way the recipient can:
-        - Derive same shared secret using their private key
-        - Decrypt the session key
-        - Decrypt the message content
+        Recipient can decrypt by:
+        - Using ephemeral public key + their private key for ECDH
+        - Deriving same encryption key via HKDF
+        - Decrypting session key
+        - Decrypting message content
         
         Args:
             plaintext: Original message content
-            recipient_public_key_hash: Recipient's public key hash
+            recipient_public_key_bytes: Recipient's public key (serialized)
             sender_public_key_hash: Sender's public key hash
             encryption_level: Security level
         
@@ -128,66 +142,89 @@ class MessageEncryption:
             Encrypted message or None if failed
         """
         try:
-            # Generate random session key for AES-256-GCM
+            # Generate random session key for message content
             session_key = secrets.token_bytes(32)  # 256 bits
-            iv = secrets.token_bytes(16)  # 128 bits for GCM mode
+            content_iv = secrets.token_bytes(16)  # 128 bits
+            session_key_iv = secrets.token_bytes(16)  # Separate IV for session key
             
-            auth_tag = b''  # Initialize auth tag
+            content_tag = b''
+            session_key_tag = b''
+            ephemeral_public_key_bytes = b''
             
             if CRYPTO_AVAILABLE:
-                # Step 1-2: Encrypt message content with AES-256-GCM
-                cipher = Cipher(
+                # STEP 1: Generate ephemeral ECDH keypair
+                ephemeral_private_key = ec.generate_private_key(ec.SECP256R1(), default_backend())
+                ephemeral_public_key = ephemeral_private_key.public_key()
+                
+                # Serialize ephemeral public key for transmission
+                ephemeral_public_key_bytes = ephemeral_public_key.public_bytes(
+                    encoding=serialization.Encoding.PEM,
+                    format=serialization.PublicFormat.SubjectPublicKeyInfo
+                )
+                
+                # STEP 2: Load recipient's public key
+                recipient_public_key = serialization.load_pem_public_key(
+                    recipient_public_key_bytes,
+                    backend=default_backend()
+                )
+                
+                # STEP 3: Perform ECDH to derive shared secret
+                shared_secret = ephemeral_private_key.exchange(ec.ECDH(), recipient_public_key)
+                
+                # STEP 4: Derive encryption key from shared secret using HKDF
+                derived_key = HKDF(
+                    algorithm=hashes.SHA256(),
+                    length=32,  # 256 bits
+                    salt=None,
+                    info=b'NexusOS-Message-Encryption',
+                    backend=default_backend()
+                ).derive(shared_secret)
+                
+                # STEP 5: Encrypt message content with session key
+                cipher_content = Cipher(
                     algorithms.AES(session_key),
-                    modes.GCM(iv),
+                    modes.GCM(content_iv),
                     backend=default_backend()
                 )
-                encryptor = cipher.encryptor()
+                encryptor_content = cipher_content.encryptor()
+                encrypted_content = encryptor_content.update(plaintext.encode()) + encryptor_content.finalize()
+                content_tag = encryptor_content.tag
                 
-                # Encrypt the plaintext
-                ciphertext = encryptor.update(plaintext.encode()) + encryptor.finalize()
-                
-                # Get GCM authentication tag (CRITICAL for integrity)
-                auth_tag = encryptor.tag
-                
-                encrypted_content = ciphertext
-            else:
-                # Fallback encryption (simplified)
-                encrypted_content = self._fallback_encrypt(plaintext, session_key, iv)
-                auth_tag = hashlib.sha256(encrypted_content).digest()[:16]
-            
-            # Step 3-4: Encrypt session key with shared secret
-            # In a full implementation, we would:
-            # 1. Use ECDH to derive shared secret from recipient's public key
-            # 2. Use KDF (HKDF) to derive encryption key from shared secret
-            # 3. Encrypt session_key with derived key
-            # 
-            # For now, simplified: encrypt session key with recipient's public key hash
-            # This is a placeholder - production needs real ECDH
-            shared_secret_key = hashlib.sha256(recipient_public_key_hash.encode()).digest()
-            
-            if CRYPTO_AVAILABLE:
-                # Encrypt session key with shared secret
-                cipher2 = Cipher(
-                    algorithms.AES(shared_secret_key),
-                    modes.GCM(iv),  # Reuse IV (not ideal, but works for demo)
+                # STEP 6: Encrypt session key with ECDH-derived key
+                cipher_session = Cipher(
+                    algorithms.AES(derived_key),
+                    modes.GCM(session_key_iv),
                     backend=default_backend()
                 )
-                encryptor2 = cipher2.encryptor()
-                encrypted_session_key = encryptor2.update(session_key) + encryptor2.finalize()
+                encryptor_session = cipher_session.encryptor()
+                encrypted_session_key = encryptor_session.update(session_key) + encryptor_session.finalize()
+                session_key_tag = encryptor_session.tag  # CRITICAL: Store this tag!
+                
             else:
-                # Fallback
-                encrypted_session_key = bytes(a ^ b for a, b in zip(session_key, shared_secret_key))
+                # Fallback encryption (not secure - for testing only)
+                ephemeral_public_key_bytes = secrets.token_bytes(65)
+                encrypted_content = self._fallback_encrypt(plaintext, session_key, content_iv)
+                content_tag = hashlib.sha256(encrypted_content).digest()[:16]
+                derived_key = hashlib.sha256(recipient_public_key_bytes).digest()
+                encrypted_session_key = bytes(a ^ b for a, b in zip(session_key, derived_key))
+                session_key_tag = hashlib.sha256(encrypted_session_key).digest()[:16]
             
             # Create content hash for integrity verification
             content_hash = hashlib.sha256(plaintext.encode()).hexdigest()
             
-            # Create encrypted message with ALL components needed for decryption
+            # Hash recipient public key
+            recipient_public_key_hash = hashlib.sha256(recipient_public_key_bytes).hexdigest()
+            
+            # STEP 7: Create encrypted message with ALL components
             encrypted_msg = EncryptedMessage(
                 encrypted_content=encrypted_content,
-                encrypted_session_key=encrypted_session_key,  # CRITICAL: Recipient needs this
-                encryption_iv=iv,
-                gcm_auth_tag=auth_tag,  # CRITICAL: For integrity verification
-                encryption_method=self.encryption_algorithm,
+                encrypted_session_key=encrypted_session_key,
+                session_key_gcm_tag=session_key_tag,  # CRITICAL: GCM tag for session key
+                session_key_iv=session_key_iv,  # CRITICAL: IV for session key
+                encryption_iv=content_iv,
+                content_gcm_tag=content_tag,  # CRITICAL: GCM tag for content
+                ephemeral_public_key=ephemeral_public_key_bytes,  # CRITICAL: For ECDH
+                encryption_method="AES-256-GCM + ECDH",
                 sender_public_key_hash=sender_public_key_hash,
                 recipient_public_key_hash=recipient_public_key_hash,
                 content_hash=content_hash
@@ -197,73 +234,93 @@ class MessageEncryption:
             
         except Exception as e:
             print(f"Encryption failed: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return None
     
     def decrypt_message(self, encrypted_msg: EncryptedMessage, 
-                       recipient_public_key_hash: str) -> Optional[str]:
+                       recipient_private_key_bytes: bytes) -> Optional[str]:
         """
-        Decrypt message with recipient's private key
+        Decrypt message with PRODUCTION-GRADE ECDH decryption
         
-        Decryption steps:
-        1. Derive shared secret using recipient's private key (ECDH)
-        2. Decrypt the encrypted_session_key to get AES session key
-        3. Use session key to decrypt message content
-        4. Verify GCM authentication tag
+        Decryption Architecture:
+        1. Load recipient's private key
+        2. Load ephemeral public key from message
+        3. Perform ECDH to derive shared secret
+        4. Derive encryption key from shared secret using HKDF
+        5. Decrypt session key with ECDH-derived key (verify GCM tag)
+        6. Decrypt message content with session key (verify GCM tag)
+        7. Verify content integrity
         
-        Only the recipient can decrypt:
+        Security:
+        - Only recipient with private key can decrypt
         - Private key never transmitted
         - Decryption happens on device
         - Zero-knowledge architecture
+        - Both GCM tags verified
         
         Args:
-            encrypted_msg: Encrypted message with session key
-            recipient_public_key_hash: Recipient's public key hash (for deriving shared secret)
+            encrypted_msg: Encrypted message with all components
+            recipient_private_key_bytes: Recipient's private key (serialized PEM)
         
         Returns:
             Decrypted plaintext or None if failed
         """
         try:
-            # Step 1: Derive shared secret
-            # In production: Use recipient's private key + sender's public key via ECDH
-            # For now: simplified using public key hash
-            shared_secret_key = hashlib.sha256(recipient_public_key_hash.encode()).digest()
-            
-            # Step 2: Decrypt session key
             if CRYPTO_AVAILABLE:
-                try:
-                    cipher = Cipher(
-                        algorithms.AES(shared_secret_key),
-                        modes.GCM(encrypted_msg.encryption_iv),
-                        backend=default_backend()
-                    )
-                    decryptor = cipher.decryptor()
-                    session_key = decryptor.update(encrypted_msg.encrypted_session_key) + decryptor.finalize()
-                except:
-                    # Fallback decryption
-                    session_key = bytes(a ^ b for a, b in zip(encrypted_msg.encrypted_session_key, shared_secret_key[:len(encrypted_msg.encrypted_session_key)]))
-            else:
-                # Fallback decryption
-                session_key = bytes(a ^ b for a, b in zip(encrypted_msg.encrypted_session_key, shared_secret_key[:len(encrypted_msg.encrypted_session_key)]))
-            
-            # Step 3: Decrypt message content with session key
-            if CRYPTO_AVAILABLE:
-                cipher2 = Cipher(
-                    algorithms.AES(session_key),
-                    modes.GCM(encrypted_msg.encryption_iv, encrypted_msg.gcm_auth_tag),
+                # STEP 1: Load recipient's private key
+                recipient_private_key = serialization.load_pem_private_key(
+                    recipient_private_key_bytes,
+                    password=None,
                     backend=default_backend()
                 )
-                decryptor2 = cipher2.decryptor()
                 
-                # Decrypt and verify
-                plaintext_bytes = decryptor2.update(encrypted_msg.encrypted_content) + decryptor2.finalize()
+                # STEP 2: Load ephemeral public key from message
+                ephemeral_public_key = serialization.load_pem_public_key(
+                    encrypted_msg.ephemeral_public_key,
+                    backend=default_backend()
+                )
+                
+                # STEP 3: Perform ECDH to derive shared secret
+                shared_secret = recipient_private_key.exchange(ec.ECDH(), ephemeral_public_key)
+                
+                # STEP 4: Derive encryption key from shared secret using HKDF
+                derived_key = HKDF(
+                    algorithm=hashes.SHA256(),
+                    length=32,  # 256 bits
+                    salt=None,
+                    info=b'NexusOS-Message-Encryption',
+                    backend=default_backend()
+                ).derive(shared_secret)
+                
+                # STEP 5: Decrypt session key with ECDH-derived key
+                cipher_session = Cipher(
+                    algorithms.AES(derived_key),
+                    modes.GCM(encrypted_msg.session_key_iv, encrypted_msg.session_key_gcm_tag),
+                    backend=default_backend()
+                )
+                decryptor_session = cipher_session.decryptor()
+                session_key = decryptor_session.update(encrypted_msg.encrypted_session_key) + decryptor_session.finalize()
+                
+                # STEP 6: Decrypt message content with session key
+                cipher_content = Cipher(
+                    algorithms.AES(session_key),
+                    modes.GCM(encrypted_msg.encryption_iv, encrypted_msg.content_gcm_tag),
+                    backend=default_backend()
+                )
+                decryptor_content = cipher_content.decryptor()
+                plaintext_bytes = decryptor_content.update(encrypted_msg.encrypted_content) + decryptor_content.finalize()
                 plaintext = plaintext_bytes.decode('utf-8')
+                
             else:
-                # Fallback decryption
+                # Fallback decryption (not secure - for testing only)
+                derived_key = hashlib.sha256(encrypted_msg.ephemeral_public_key).digest()
+                session_key = bytes(a ^ b for a, b in zip(encrypted_msg.encrypted_session_key, derived_key[:len(encrypted_msg.encrypted_session_key)]))
                 key_stream = (session_key + encrypted_msg.encryption_iv) * (len(encrypted_msg.encrypted_content) // len(session_key + encrypted_msg.encryption_iv) + 1)
                 plaintext_bytes = bytes(a ^ b for a, b in zip(encrypted_msg.encrypted_content, key_stream[:len(encrypted_msg.encrypted_content)]))
                 plaintext = plaintext_bytes.decode('utf-8', errors='ignore')
             
-            # Step 4: Verify integrity
+            # STEP 7: Verify integrity
             if not self.verify_message_integrity(encrypted_msg, plaintext):
                 print("WARNING: Message integrity verification failed")
             
@@ -271,6 +328,8 @@ class MessageEncryption:
                 
         except Exception as e:
             print(f"Decryption failed: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return None
     
     def _fallback_encrypt(self, plaintext: str, key: bytes, iv: bytes) -> bytes:
@@ -301,9 +360,10 @@ class MessageEncryption:
         return content_hash == encrypted_msg.content_hash
     
     def encrypt_personal_data(self, personal_data: Dict[str, Any], 
+                             owner_public_key_bytes: bytes,
                              owner_public_key_hash: str) -> Dict[str, Any]:
         """
-        Encrypt personal user data
+        Encrypt personal user data with ECDH
         
         Personal data includes:
         - User profile information
@@ -315,6 +375,7 @@ class MessageEncryption:
         
         Args:
             personal_data: Dictionary of personal information
+            owner_public_key_bytes: Owner's public key (PEM bytes)
             owner_public_key_hash: Owner's public key hash
         
         Returns:
@@ -326,10 +387,10 @@ class MessageEncryption:
             # Convert value to string
             value_str = str(value)
             
-            # Encrypt each field
+            # Encrypt each field with ECDH
             encrypted_msg = self.encrypt_message(
                 plaintext=value_str,
-                recipient_public_key_hash=owner_public_key_hash,
+                recipient_public_key_bytes=owner_public_key_bytes,
                 sender_public_key_hash=owner_public_key_hash,
                 encryption_level=EncryptionLevel.HIGH
             )

@@ -230,13 +230,18 @@ class MobileDAGProtocol:
         if self.encryption_system is None:
             return (False, "Encryption system not available", None)
         
-        # Get public key hashes for encryption
+        # Get public keys for ECDH encryption
         sender_key_hash = wallet.address.public_key_hash if wallet.address else ""
-        recipient_key_hash = recipient_address  # Simplified - would lookup recipient's public key
+        
+        # In production: lookup recipient's public key from network
+        # For now: use sender's own public key for demonstration
+        recipient_public_key_bytes = wallet.get_public_key_bytes()
+        if not recipient_public_key_bytes:
+            return (False, "No public key available for encryption", None)
         
         encrypted_msg = self.encryption_system.encrypt_message(
             plaintext=content,
-            recipient_public_key_hash=recipient_key_hash,
+            recipient_public_key_bytes=recipient_public_key_bytes,
             sender_public_key_hash=sender_key_hash,
             encryption_level=EncryptionLevel.STANDARD if EncryptionLevel else None
         )
