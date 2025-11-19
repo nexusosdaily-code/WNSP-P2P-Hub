@@ -1,7 +1,7 @@
 # NexusOS Advance Systems
 
 ## Overview
-NexusOS is a revolutionary mobile-first blockchain operating system where user mobile phones are the sole hardware for the entire network. It functions as a complete blockchain system through connected mobile devices without traditional server infrastructure, aiming for a community-owned, pure peer-to-peer network with zero infrastructure costs. The platform introduces a Layer 1 blockchain using wavelength-based cryptographic validation, replacing traditional hashing with principles from electromagnetic physics and quantum mechanics. It features a native NXT token, an integrated Decentralized Exchange (DEX), secure messaging, and an optical mesh networking infrastructure, all governed by quantum physics principles.
+NexusOS is a revolutionary mobile-first blockchain operating system where user mobile phones are the sole hardware for the entire network. It functions as a complete blockchain system through connected mobile devices without traditional server infrastructure, aiming for a community-owned, pure peer-to-peer network with zero infrastructure costs. Mobile blockchain using light physics instead of traditional cryptographic hashing. It features a native NXT token, an integrated Decentralized Exchange (DEX), secure messaging, and an optical mesh networking infrastructure, all governed by quantum physics principles.
 
 ## User Preferences
 - **Communication Style**: Simple, everyday language
