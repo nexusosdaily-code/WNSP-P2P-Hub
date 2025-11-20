@@ -46,6 +46,7 @@ from offline_mesh_dashboard import render_offline_mesh_dashboard
 from wavelength_code_interface import render_wavelength_code_interface
 from wavelang_ai_teacher import render_wavelang_ai_teacher
 from wavelang_compiler import render_wavelang_compiler_dashboard
+from quantum_wavelang_analyzer import render_quantum_wavelang_analyzer
 
 
 def main():
@@ -89,7 +90,8 @@ def main():
                 "🌐 Offline Mesh Network",
                 "🌊 WaveLang Studio",
                 "🤖 WaveLang AI Teacher",
-                "💻 WaveLang Binary Compiler"
+                "💻 WaveLang Binary Compiler",
+                "⚛️ Quantum Analyzer"
             ],
             key="module_selector"
         )
@@ -192,6 +194,11 @@ def main():
                 "icon": "💻",
                 "desc": "See how binary CPUs execute wavelength code - shows full compilation pipeline",
                 "features": ["Wavelength→Bytecode", "Bytecode→Assembly", "Bytecode→Python", "Full Pipeline"]
+            },
+            "⚛️ Quantum Analyzer": {
+                "icon": "⚛️",
+                "desc": "Quantum-level program analysis using wave properties and physics mechanics",
+                "features": ["Wave Interference", "Superposition Paths", "Coherence Metrics", "Phase Locking", "Harmonics", "State Collapse"]
             }
         }
         
@@ -287,6 +294,10 @@ def main():
     elif module == "💻 WaveLang Binary Compiler":
         # WaveLang compilation pipeline
         render_wavelang_compiler_dashboard()
+    
+    elif module == "⚛️ Quantum Analyzer":
+        # Quantum-level WaveLang analysis
+        render_quantum_wavelang_analyzer()
 
 
 if __name__ == "__main__":
