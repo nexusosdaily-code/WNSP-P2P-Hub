@@ -36,47 +36,16 @@ def main():
         initial_sidebar_state="expanded"
     )
     
-    # Custom CSS for better UI
-    st.markdown("""
-        <style>
-        /* Sidebar styling */
-        [data-testid="stSidebar"] {
-            background-color: #1E1E1E;
-        }
-        
-        /* Module selector styling */
-        .css-1d391kg, .css-1v0mbdj {
-            font-size: 16px;
-        }
-        
-        /* Better button styling */
-        .stButton>button {
-            width: 100%;
-            border-radius: 5px;
-            height: 3em;
-            font-weight: 600;
-        }
-        
-        /* Enhanced cursor pointer on interactive elements */
-        button, a, img, [data-testid="stSelectbox"], 
-        [data-testid="stExpander"], .stButton, select {
-            cursor: pointer !important;
-        }
-        </style>
-    """, unsafe_allow_html=True)
     
     # Sidebar - Module Selector
     with st.sidebar:
-        st.image("https://img.icons8.com/fluency/96/000000/blockchain-technology.png", width=80)
         st.title("🌍 NexusOS")
         st.markdown("**Civilization Operating System**")
         st.divider()
         
-        st.subheader("📱 Navigation")
-        
-        # Module selector
+        # Module selector - clean and simple
         module = st.selectbox(
-            "Select Module",
+            "**Select Dashboard**",
             [
                 "🌍 Civilization Dashboard",
                 "💎 Web3 Wallet",
@@ -91,7 +60,7 @@ def main():
         
         st.divider()
         
-        # Module descriptions
+        # Simple module info
         module_info = {
             "🌍 Civilization Dashboard": {
                 "icon": "🌍",
@@ -132,15 +101,15 @@ def main():
         
         if module in module_info:
             info = module_info[module]
-            st.markdown(f"### {info['icon']} About")
-            st.info(info['desc'])
-            st.markdown("**Key Features:**")
-            for feature in info['features']:
-                st.markdown(f"- {feature}")
+            with st.expander(f"{info['icon']} About this module"):
+                st.write(info['desc'])
+                st.markdown("**Features:**")
+                for feature in info['features']:
+                    st.markdown(f"• {feature}")
         
         st.divider()
-        st.caption("NexusOS v3.0 - Production Ready ✅")
-        st.caption("Physics-Based • Quantum-Resistant • Mobile-First")
+        st.caption("🌊 NexusOS v3.0")
+        st.caption("Production Ready ✅")
     
     # Main content area - Route to selected module
     if module == "🌍 Civilization Dashboard":
