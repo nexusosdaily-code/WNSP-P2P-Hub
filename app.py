@@ -19,6 +19,7 @@ Central hub providing access to all NexusOS modules:
 13. Mobile Connectivity (Device Network Monitoring)
 14. Long-term Supply Forecasting (50-100 Year Predictions)
 15. AI Management Control (Centralized AI Governance)
+16. Talk to Nexus AI (Conversational Governance Interface)
 """
 
 import streamlit as st
@@ -39,6 +40,7 @@ from payment_layer_page import render_payment_layer_page
 from proof_of_spectrum_page import render_proof_of_spectrum
 from validator_economics_page import render_validator_economics_page
 from ai_management_dashboard import render_ai_management_dashboard
+from nexus_ai_chat import render_nexus_ai_chat
 
 
 def main():
@@ -77,7 +79,8 @@ def main():
                 "⚙️ Nexus Consensus",
                 "📱 Mobile Connectivity",
                 "📊 Long-term Supply",
-                "🤖 AI Management Control"
+                "🤖 AI Management Control",
+                "💬 Talk to Nexus AI"
             ],
             key="module_selector"
         )
@@ -160,6 +163,11 @@ def main():
                 "icon": "🤖",
                 "desc": "Centralized AI governance and control across all components",
                 "features": ["AI System Status", "Decision History", "Component Integration", "Learning Analytics", "Real-time Activity", "F_floor Protection"]
+            },
+            "💬 Talk to Nexus AI": {
+                "icon": "💬",
+                "desc": "Conversational interface to the civilization governance AI",
+                "features": ["Ask About Vision", "F_floor Explanations", "Learned Patterns", "Governance Decisions", "Economics Discussion", "100-Year Planning"]
             }
         }
         
@@ -235,6 +243,10 @@ def main():
     elif module == "🤖 AI Management Control":
         # AI management and governance dashboard
         render_ai_management_dashboard()
+    
+    elif module == "💬 Talk to Nexus AI":
+        # Conversational interface to governance AI
+        render_nexus_ai_chat()
 
 
 if __name__ == "__main__":
