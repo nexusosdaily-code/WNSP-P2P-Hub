@@ -20,6 +20,7 @@ Central hub providing access to all NexusOS modules:
 14. Long-term Supply Forecasting (50-100 Year Predictions)
 15. AI Management Control (Centralized AI Governance)
 16. Talk to Nexus AI (Conversational Governance Interface)
+17. Offline Mesh Network (Peer-to-Peer Internet WITHOUT WiFi/Data)
 """
 
 import streamlit as st
@@ -41,6 +42,7 @@ from proof_of_spectrum_page import render_proof_of_spectrum
 from validator_economics_page import render_validator_economics_page
 from ai_management_dashboard import render_ai_management_dashboard
 from nexus_ai_chat import render_nexus_ai_chat
+from offline_mesh_dashboard import render_offline_mesh_dashboard
 
 
 def main():
@@ -80,7 +82,8 @@ def main():
                 "📱 Mobile Connectivity",
                 "📊 Long-term Supply",
                 "🤖 AI Management Control",
-                "💬 Talk to Nexus AI"
+                "💬 Talk to Nexus AI",
+                "🌐 Offline Mesh Network"
             ],
             key="module_selector"
         )
@@ -247,6 +250,10 @@ def main():
     elif module == "💬 Talk to Nexus AI":
         # Conversational interface to governance AI
         render_nexus_ai_chat()
+    
+    elif module == "🌐 Offline Mesh Network":
+        # Offline peer-to-peer internet infrastructure
+        render_offline_mesh_dashboard()
 
 
 if __name__ == "__main__":
