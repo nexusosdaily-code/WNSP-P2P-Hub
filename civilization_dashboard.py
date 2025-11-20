@@ -77,49 +77,60 @@ def render_wave_computation_tab():
     col1, col2 = st.columns(2)
     
     with col1:
-        wavelength = st.slider("Wavelength (nm)", 380, 750, 550)
-        amplitude = st.slider("Amplitude", 0.0, 1.0, 0.8)
-        phase = st.slider("Phase (radians)", 0.0, 2*np.pi, 0.0)
+        wavelength = st.slider("Wavelength (nm)", 380, 750, 550, key="wave_wavelength")
+        amplitude = st.slider("Amplitude", 0.0, 1.0, 0.8, key="wave_amplitude")
+        phase = st.slider("Phase (radians)", 0.0, 2*np.pi, 0.0, key="wave_phase")
     
     with col2:
-        modulation = st.selectbox("Modulation", [m.name for m in Modulation])
-        polarization = st.selectbox("Polarization", [p.name for p in Polarization])
+        modulation = st.selectbox("Modulation", [m.name for m in Modulation], key="wave_modulation")
+        polarization = st.selectbox("Polarization", [p.name for p in Polarization], key="wave_polarization")
     
-    # Create wave state
-    wave = WaveComputation.create_state(
-        wavelength,
-        amplitude,
-        phase,
-        Polarization[polarization],
-        Modulation[modulation]
-    )
-    
-    st.markdown("### Wave State Properties")
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Frequency", f"{wave.frequency:.2e} Hz")
-    col2.metric("Energy (E=hf)", f"{wave.energy():.2e} J")
-    col3.metric("Spectral Region", wave.to_spectral_region())
-    
-    # Visualize wave
-    t = np.linspace(0, 1e-9, 1000)
-    wave_signal = amplitude * np.sin(2 * np.pi * wave.frequency * t + phase)
-    
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(
-        x=t * 1e9,
-        y=wave_signal,
-        mode='lines',
-        name='Wave',
-        line=dict(color='cyan', width=2)
-    ))
-    fig.update_layout(
-        title="Electromagnetic Wave Signal",
-        xaxis_title="Time (nanoseconds)",
-        yaxis_title="Amplitude",
-        height=300,
-        template="plotly_dark"
-    )
-    st.plotly_chart(fig, use_container_width=True)
+    try:
+        # Create wave state
+        wave = WaveComputation.create_state(
+            wavelength,
+            amplitude,
+            phase,
+            Polarization[polarization],
+            Modulation[modulation]
+        )
+        
+        st.markdown("### Wave State Properties")
+        col1, col2, col3 = st.columns(3)
+        
+        # Display wave properties
+        frequency_hz = wave.frequency
+        energy_j = wave.energy()
+        spectral_region = wave.to_spectral_region()
+        
+        col1.metric("Frequency", f"{frequency_hz:.2e} Hz")
+        col2.metric("Energy (E=hf)", f"{energy_j:.2e} J")
+        col3.metric("Spectral Region", spectral_region)
+        
+        # Visualize wave
+        t = np.linspace(0, 1e-9, 1000)
+        wave_signal = amplitude * np.sin(2 * np.pi * frequency_hz * t + phase)
+        
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=t * 1e9,
+            y=wave_signal,
+            mode='lines',
+            name='Wave',
+            line=dict(color='cyan', width=2)
+        ))
+        fig.update_layout(
+            title="Electromagnetic Wave Signal",
+            xaxis_title="Time (nanoseconds)",
+            yaxis_title="Amplitude",
+            height=300,
+            template="plotly_dark"
+        )
+        st.plotly_chart(fig, use_container_width=True)
+        
+    except Exception as e:
+        st.error(f"Error creating wave state: {str(e)}")
+        st.exception(e)
 
 def render_bhls_floor_tab():
     """Render BHLS floor system"""
