@@ -32,6 +32,13 @@ if 'wnsp_encoder' not in st.session_state:
 def render_wnsp_v2_dashboard():
     """Main WNSP v2.0 dashboard."""
     
+    # Initialize session state if not already done
+    if 'wnsp_encoder' not in st.session_state:
+        st.session_state.wnsp_encoder = WnspEncoderV2()
+        st.session_state.wnsp_decoder = WnspDecoderV2()
+        st.session_state.wnsp_messages = []
+        st.session_state.wnsp_token_system = NativeTokenSystem()
+    
     st.title("🌊 WNSP v2.0 - Wavelength-Native Signaling Protocol")
     st.markdown("*Revolutionary optical mesh networking with quantum cryptography & NXT payments*")
     
