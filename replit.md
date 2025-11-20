@@ -38,6 +38,8 @@ Core technical implementations include:
 -   **Database**: PostgreSQL, SQLAlchemy
 -   **Optimization**: scikit-optimize, bcrypt, passlib
 
+-   **Wavelength Programming Language (WaveLang)** (`wavelength_code_generator.py`, `wavelength_code_dashboard.py`): **Revolutionary coding paradigm using electromagnetic wavelengths instead of traditional syntax**. Code is represented as wavelength patterns where: (1) Spectral Regions = code organization (RED=arithmetic, BLUE=logic, GREEN=memory, YELLOW=control, ORANGE=functions, UV-IR for I/O), (2) Wavelengths = instructions (each opcode has a specific wavelength: ADD=380nm, MULTIPLY=392nm, LOAD=495nm, etc.), (3) Modulation types = computational complexity (OOK=simple, QAM64=complex), (4) Amplitude = priority (0.5=low, 1.0=high), (5) Phase = conditional branching (0°=sequential, 90°=if-true, 180°=if-false, 270°=loop), (6) E=hf quantum energy = execution budget/cost (higher frequency = higher energy cost), (7) DAG structure = control flow and dependencies. Complete instruction set with 20+ opcodes. Example functions demonstrate arithmetic, conditional logic, loops, and complex algorithms (Fibonacci). Dashboard shows concepts, examples, program analysis, and full instruction set reference. Ready for native implementation as domain-specific language (DSL).
+
 ## External Dependencies
 -   **PostgreSQL**: Primary database.
 -   **SQLAlchemy**: Python ORM.
