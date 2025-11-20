@@ -18,9 +18,18 @@ from wavelength_code_generator import (
     WavelengthCodeGenerator, WavelengthInstruction,
     WavelengthOpcodes, ControlFlowMode, DataType
 )
-from wavelength_validator import SpectralRegion, ModulationType
+from wavelength_validator import SpectralRegion, ModulationType, WaveProperties
 import math
 import json
+
+# Future use cases for WaveProperties:
+# 1. Wave interference analysis - detect instruction collisions
+# 2. Quantum superposition - model parallel execution paths
+# 3. Spectral diversity - ensure validator resistance
+# 4. Wave coherence - measure program stability/reliability
+# 5. Phase locking - synchronize multi-instruction sequences
+# 6. Harmonic analysis - optimize bytecode efficiency
+# 7. Wave packet collapse - debug program execution states
 
 def render_wavelength_code_interface():
     """Main interactive interface for WaveLang programming"""
