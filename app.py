@@ -760,14 +760,53 @@ def main():
             backdrop-filter: blur(5px);
         }
         
-        /* Make selectbox larger and more readable */
+        /* Make selectbox larger and more readable with wavelength animation */
         [data-testid="stSelectbox"] select {
-            font-size: 16px !important;
+            font-size: 18px !important;
+            font-weight: 600 !important;
             padding: 12px !important;
             min-height: 48px !important;
-            background: rgba(0, 0, 0, 0.3) !important;
-            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            background: rgba(0, 0, 0, 0.6) !important;
+            border: 2px solid rgba(255, 255, 255, 0.3) !important;
             border-radius: 8px !important;
+        }
+        
+        /* Animated wavelength text for select options */
+        [data-testid="stSelectbox"] label,
+        [data-testid="stSelectbox"] select,
+        [data-testid="stSelectbox"] option {
+            background: linear-gradient(90deg, 
+                #ff0000,  /* Red */
+                #ff7f00,  /* Orange */
+                #ffff00,  /* Yellow */
+                #00ff00,  /* Green */
+                #00ffff,  /* Cyan */
+                #0000ff,  /* Blue */
+                #8b00ff,  /* Violet */
+                #ff0000   /* Back to Red */
+            ) !important;
+            background-size: 200% 200% !important;
+            -webkit-background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+            background-clip: text !important;
+            animation: wavelength-flow 8s ease infinite !important;
+            font-weight: 700 !important;
+        }
+        
+        /* Dropdown options styling */
+        select option {
+            background: #1a1a1a !important;
+            color: #ffffff !important;
+            padding: 10px !important;
+            font-size: 16px !important;
+        }
+        
+        /* Highlighted dropdown option */
+        select option:hover,
+        select option:focus,
+        select option:checked {
+            background: #2d2d2d !important;
+            font-weight: 700 !important;
         }
         
         /* Mobile-first responsive layout */
