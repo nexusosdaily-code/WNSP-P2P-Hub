@@ -520,7 +520,7 @@ def render_analytics():
     from nexus_ai import render_nexus_ai_button
     # Use unique component key for payment layer
     render_nexus_ai_button('payment_layer', {
-        'current_supply': token_system.circulating_supply,
+        'current_supply': token_system.get_circulating_supply(),
         'burn_rate': msg_stats['total_burned_nxt'] / max(msg_stats['total_messages'], 1),
         'total_burned': msg_stats['total_burned_nxt'],
         'total_messages': msg_stats['total_messages']
