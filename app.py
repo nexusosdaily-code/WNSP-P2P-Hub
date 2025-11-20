@@ -10,10 +10,14 @@ Central hub providing access to all NexusOS modules:
 4. Mobile DAG Messaging (Blockchain Messaging)
 5. Blockchain Explorer (Live Block/Transaction Visualization)
 6. DEX - Decentralized Exchange (AMM with NXT pairs)
-7. Wavelength Economics
-8. Nexus Consensus
-9. Mobile Connectivity
-10. Long-term Supply Forecasting
+7. GhostDAG System (Parallel Processing & DAG Optimization)
+8. Payment Layer (Native Token POW Mining)
+9. Proof of Spectrum (Wavelength Consensus)
+10. Validator Economics (Staking & Delegation)
+11. Wavelength Economics (Physics Validation)
+12. Nexus Consensus (Unified Consensus Engine)
+13. Mobile Connectivity (Device Network Monitoring)
+14. Long-term Supply Forecasting (50-100 Year Predictions)
 """
 
 import streamlit as st
@@ -29,6 +33,10 @@ from longterm_supply_dashboard import render_longterm_supply_dashboard
 from mobile_dag_messaging import render_mobile_dag_messaging
 from blockchain_viz import render_blockchain_dashboard
 from dex_page import render_dex_page
+from ghostdag_page import render_ghostdag_system
+from payment_layer_page import render_payment_layer_page
+from proof_of_spectrum_page import render_proof_of_spectrum
+from validator_economics_page import render_validator_economics_page
 
 
 def main():
@@ -59,7 +67,11 @@ def main():
                 "💬 Mobile DAG Messaging",
                 "🔗 Blockchain Explorer",
                 "💱 DEX (Token Exchange)",
-                "💰 Wavelength Economics",
+                "⚡ GhostDAG System",
+                "💰 Payment Layer",
+                "🌈 Proof of Spectrum",
+                "🏛️ Validator Economics",
+                "💵 Wavelength Economics",
                 "⚙️ Nexus Consensus",
                 "📱 Mobile Connectivity",
                 "📊 Long-term Supply"
@@ -101,7 +113,27 @@ def main():
                 "desc": "Decentralized Exchange with AMM (NXT-paired liquidity pools)",
                 "features": ["Token Swaps", "Liquidity Pools", "Add/Remove Liquidity", "Pool Analytics", "0.3% Fees to Validators"]
             },
-            "💰 Wavelength Economics": {
+            "⚡ GhostDAG System": {
+                "icon": "⚡",
+                "desc": "DAG-based parallel processing and bottleneck elimination",
+                "features": ["GhostDAG Consensus", "DAG Optimizer", "Bottleneck Analysis", "Performance Dashboard", "Live Simulation"]
+            },
+            "💰 Payment Layer": {
+                "icon": "💰",
+                "desc": "Native token (NXT) payment system with POW mining",
+                "features": ["Token Economics", "POW Mining", "Messaging Payments", "Account Management", "Analytics"]
+            },
+            "🌈 Proof of Spectrum": {
+                "icon": "🌈",
+                "desc": "Wavelength-inspired consensus eliminating 51% attacks",
+                "features": ["Spectral Diversity", "Attack Resistance", "Validator Distribution", "Wave Interference Validation"]
+            },
+            "🏛️ Validator Economics": {
+                "icon": "🏛️",
+                "desc": "Staking, delegation, and validator reward system",
+                "features": ["Stake NXT", "Delegate Tokens", "Validator Rankings", "Performance Metrics", "Profitability Calculator"]
+            },
+            "💵 Wavelength Economics": {
                 "icon": "💰",
                 "desc": "Physics-based economic validation system",
                 "features": ["Wave Validation", "E=hf Economics", "Spectral Consensus"]
@@ -160,7 +192,23 @@ def main():
         # Decentralized Exchange
         render_dex_page()
     
-    elif module == "💰 Wavelength Economics":
+    elif module == "⚡ GhostDAG System":
+        # GhostDAG ecosystem
+        render_ghostdag_system()
+    
+    elif module == "💰 Payment Layer":
+        # Native token payment layer
+        render_payment_layer_page()
+    
+    elif module == "🌈 Proof of Spectrum":
+        # Proof of Spectrum consensus
+        render_proof_of_spectrum()
+    
+    elif module == "🏛️ Validator Economics":
+        # Validator staking and economics
+        render_validator_economics_page()
+    
+    elif module == "💵 Wavelength Economics":
         # Economics dashboard
         render_wavelength_economics_dashboard()
     
