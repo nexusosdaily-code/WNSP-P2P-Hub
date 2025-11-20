@@ -18,6 +18,7 @@ Central hub providing access to all NexusOS modules:
 12. Nexus Consensus (Unified Consensus Engine)
 13. Mobile Connectivity (Device Network Monitoring)
 14. Long-term Supply Forecasting (50-100 Year Predictions)
+15. AI Management Control (Centralized AI Governance)
 """
 
 import streamlit as st
@@ -37,6 +38,7 @@ from ghostdag_page import render_ghostdag_system
 from payment_layer_page import render_payment_layer_page
 from proof_of_spectrum_page import render_proof_of_spectrum
 from validator_economics_page import render_validator_economics_page
+from ai_management_dashboard import render_ai_management_dashboard
 
 
 def main():
@@ -74,7 +76,8 @@ def main():
                 "💵 Wavelength Economics",
                 "⚙️ Nexus Consensus",
                 "📱 Mobile Connectivity",
-                "📊 Long-term Supply"
+                "📊 Long-term Supply",
+                "🤖 AI Management Control"
             ],
             key="module_selector"
         )
@@ -152,6 +155,11 @@ def main():
                 "icon": "📊",
                 "desc": "50-100 year supply forecasting and analytics",
                 "features": ["Predictive Models", "Trend Analysis", "Strategic Insights"]
+            },
+            "🤖 AI Management Control": {
+                "icon": "🤖",
+                "desc": "Centralized AI governance and control across all components",
+                "features": ["AI System Status", "Decision History", "Component Integration", "Learning Analytics", "Real-time Activity", "F_floor Protection"]
             }
         }
         
@@ -223,6 +231,10 @@ def main():
     elif module == "📊 Long-term Supply":
         # Long-term supply forecasting
         render_longterm_supply_dashboard()
+    
+    elif module == "🤖 AI Management Control":
+        # AI management and governance dashboard
+        render_ai_management_dashboard()
 
 
 if __name__ == "__main__":
