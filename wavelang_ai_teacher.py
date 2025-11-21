@@ -456,8 +456,17 @@ def render_text_to_wavelength_mode(teacher: WaveLangAITeacher):
                     st.warning("⚠️ **Warnings:**\n" + "\n".join(validation["warnings"]))
             else:
                 st.error("❌ Could not parse your description. Try being more specific.")
+                st.info(result.get("explanation", ""))
+                if "suggestions" in result:
+                    st.markdown("**Try these examples:**")
+                    for sugg in result["suggestions"]:
+                        st.markdown(f"- {sugg}")
         else:
             st.warning("Please enter a description")
+        
+        # Store instructions in session for optimizer
+        if "instructions" in result:
+            st.session_state.last_instructions = result["instructions"]
 
 
 def render_wavelength_to_text_mode(teacher: WaveLangAITeacher):
