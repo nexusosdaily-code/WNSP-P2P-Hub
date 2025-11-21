@@ -1,24 +1,26 @@
-# Python cache
+# Python
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
+*$py.class
+*.so
 .Python
-
-# Virtual environments
-venv/
 env/
-ENV/
+venv/
+*.egg-info/
+dist/
+build/
 
-# Database files
+# Streamlit
+.streamlit/secrets.toml
+
+# Environment
+.env
+.replit
+replit.nix
+
+# Database
 *.db
 *.sqlite
-*.sqlite3
-
-# Large asset folders
-attached_assets/
-stock_images/
-generated_images/
 
 # Logs
 *.log
@@ -27,19 +29,13 @@ generated_images/
 # IDE
 .vscode/
 .idea/
+*.swp
+*.swo
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Replit
-.replit
-replit.nix
-.config/
-.cache/
-.upm/
-uv.lock
-
-# Test coverage
-.coverage
-htmlcov/
+# Secrets
+nexus_ai_knowledge.json
+wallets/
