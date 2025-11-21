@@ -412,26 +412,57 @@ class DEXEngine:
         self._initialize_default_tokens()
     
     def _initialize_default_tokens(self):
-        """Create default ERC-20 tokens (NXT handled by adapter)"""
-        # Stablecoin
-        usdc = Token(
-            symbol="USDC",
-            name="USD Coin",
-            decimals=6,
-            creator="system"
-        )
-        usdc.mint("treasury", 1_000_000)
-        self.tokens["USDC"] = usdc
+        """Create top 29 cryptocurrency tokens paired with NXT (native token handled by adapter)"""
         
-        # Governance token
-        gov = Token(
-            symbol="GOV",
-            name="Governance Token",
-            decimals=18,
-            creator="system"
-        )
-        gov.mint("treasury", 100_000)
-        self.tokens["GOV"] = gov
+        # Top 29 Cryptocurrencies by Market Cap (as of 2025)
+        # Each will have a TOKEN/NXT trading pair
+        top_tokens = [
+            # Major Cryptocurrencies (Top 10)
+            {"symbol": "BTC", "name": "Bitcoin", "decimals": 8, "supply": 21_000},
+            {"symbol": "ETH", "name": "Ethereum", "decimals": 18, "supply": 120_000_000},
+            {"symbol": "USDT", "name": "Tether USD", "decimals": 6, "supply": 100_000_000},
+            {"symbol": "BNB", "name": "Binance Coin", "decimals": 18, "supply": 200_000_000},
+            {"symbol": "SOL", "name": "Solana", "decimals": 9, "supply": 580_000_000},
+            {"symbol": "USDC", "name": "USD Coin", "decimals": 6, "supply": 50_000_000},
+            {"symbol": "XRP", "name": "Ripple", "decimals": 6, "supply": 100_000_000_000},
+            {"symbol": "ADA", "name": "Cardano", "decimals": 6, "supply": 45_000_000_000},
+            {"symbol": "AVAX", "name": "Avalanche", "decimals": 18, "supply": 720_000_000},
+            {"symbol": "DOGE", "name": "Dogecoin", "decimals": 8, "supply": 140_000_000_000},
+            
+            # Layer 1 & DeFi (11-20)
+            {"symbol": "TRX", "name": "TRON", "decimals": 6, "supply": 100_000_000_000},
+            {"symbol": "DOT", "name": "Polkadot", "decimals": 10, "supply": 1_400_000_000},
+            {"symbol": "MATIC", "name": "Polygon", "decimals": 18, "supply": 10_000_000_000},
+            {"symbol": "LTC", "name": "Litecoin", "decimals": 8, "supply": 84_000_000},
+            {"symbol": "LINK", "name": "Chainlink", "decimals": 18, "supply": 1_000_000_000},
+            {"symbol": "UNI", "name": "Uniswap", "decimals": 18, "supply": 1_000_000_000},
+            {"symbol": "ATOM", "name": "Cosmos", "decimals": 6, "supply": 390_000_000},
+            {"symbol": "XLM", "name": "Stellar", "decimals": 7, "supply": 50_000_000_000},
+            {"symbol": "ALGO", "name": "Algorand", "decimals": 6, "supply": 10_000_000_000},
+            {"symbol": "NEAR", "name": "NEAR Protocol", "decimals": 24, "supply": 1_000_000_000},
+            
+            # Emerging & DeFi (21-29)
+            {"symbol": "APT", "name": "Aptos", "decimals": 8, "supply": 1_000_000_000},
+            {"symbol": "ARB", "name": "Arbitrum", "decimals": 18, "supply": 10_000_000_000},
+            {"symbol": "OP", "name": "Optimism", "decimals": 18, "supply": 4_300_000_000},
+            {"symbol": "INJ", "name": "Injective", "decimals": 18, "supply": 100_000_000},
+            {"symbol": "SUI", "name": "Sui", "decimals": 9, "supply": 10_000_000_000},
+            {"symbol": "FIL", "name": "Filecoin", "decimals": 18, "supply": 2_000_000_000},
+            {"symbol": "AAVE", "name": "Aave", "decimals": 18, "supply": 16_000_000},
+            {"symbol": "MKR", "name": "Maker", "decimals": 18, "supply": 1_000_000},
+            {"symbol": "GOV", "name": "NexusOS Governance", "decimals": 18, "supply": 100_000_000}
+        ]
+        
+        # Create all tokens with initial supply minted to treasury
+        for token_config in top_tokens:
+            token = Token(
+                symbol=token_config["symbol"],
+                name=token_config["name"],
+                decimals=token_config["decimals"],
+                creator="system"
+            )
+            token.mint("treasury", token_config["supply"])
+            self.tokens[token_config["symbol"]] = token
     
     def create_token(self, symbol: str, name: str, initial_supply: float, creator: str, decimals: int = 18) -> Tuple[bool, str]:
         """Create new ERC-20 token (cannot create NXT - handled by native system)"""
