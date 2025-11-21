@@ -387,7 +387,14 @@ def render_learning_analytics():
                     optimal_ranges = patterns.get('optimal_ranges', {})
                     if optimal_ranges:
                         for param, ranges in list(optimal_ranges.items())[:3]:
-                            st.caption(f"• `{param}`: {ranges.get('min', 0):.4f} - {ranges.get('max', 0):.4f}")
+                            # Safe type conversion for min/max values
+                            try:
+                                min_val = float(ranges.get('min', 0))
+                                max_val = float(ranges.get('max', 0))
+                                st.caption(f"• `{param}`: {min_val:.4f} - {max_val:.4f}")
+                            except (ValueError, TypeError):
+                                # Skip non-numeric ranges
+                                st.caption(f"• `{param}`: {ranges.get('min', 'N/A')} - {ranges.get('max', 'N/A')}")
                     else:
                         st.caption("Learning in progress...")
                 
