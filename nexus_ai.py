@@ -930,6 +930,321 @@ class NexusAI:
             recommendations_text if recommendations else "✅ Optimal configuration - no immediate changes needed",
             "warning" if len(recommendations) >= 3 else "success"
         )
+    
+    @staticmethod
+    def generate_campaign_analysis_report(campaign_data: Dict) -> None:
+        """Generate comprehensive innovation campaign analysis report after community voting"""
+        st.markdown("### 🤖 Nexus AI Campaign Analysis Report")
+        st.markdown("---")
+        
+        # Extract data
+        campaign = campaign_data.get('campaign')
+        status = campaign_data.get('status', {})
+        community_votes = campaign_data.get('community_votes', [])
+        
+        # Calculate metrics
+        total_votes = status.get('total_voters', 0)
+        approval_pct = status.get('approval_percentage', 0)
+        rejection_pct = status.get('rejection_percentage', 0)
+        nxt_burned = status.get('nxt_burned', 0)
+        
+        # === SECTION 1: Campaign Overview ===
+        outcome_icon = "🟢" if approval_pct >= 60 else "🔴"
+        outcome_text = "APPROVED" if approval_pct >= 60 else "REJECTED"
+        
+        NexusAI.render_report_section(
+            f"{outcome_icon} Campaign Result: {outcome_text}",
+            f"""**{status.get('title', 'Unknown')}** received {total_votes:,} community votes with {approval_pct:.1f}% approval.
+            
+**Validator Commitment**: {nxt_burned:,.0f} NXT burned to promote this innovation (${nxt_burned * 100:,.0f} USD at $100/NXT).
+
+**Threshold Analysis**: NexusOS requires 60% approval for implementation. This campaign scored {approval_pct:.1f}%, 
+{'**exceeding**' if approval_pct >= 60 else '**falling short of**'} the requirement by {abs(approval_pct - 60):.1f} percentage points.
+
+**Final Status**: {status.get('status', 'Unknown')}""",
+            "success" if approval_pct >= 60 else "warning"
+        )
+        
+        # === SECTION 2: Vote Distribution Analysis ===
+        approve_votes = status.get('votes_approve', 0)
+        reject_votes = status.get('votes_reject', 0)
+        
+        # Determine vote pattern
+        if approval_pct >= 75:
+            vote_pattern = "**Strong consensus** - overwhelming community support signals high-confidence innovation"
+        elif approval_pct >= 60:
+            vote_pattern = "**Moderate approval** - solid majority but significant minority concerns exist"
+        elif approval_pct >= 40:
+            vote_pattern = "**Divided community** - near-even split suggests controversial or poorly communicated proposal"
+        else:
+            vote_pattern = "**Strong opposition** - majority rejects innovation, fundamental concerns identified"
+        
+        NexusAI.render_report_section(
+            "Vote Distribution & Community Sentiment",
+            f"""**Approval**: {approve_votes:,} votes ({approval_pct:.1f}%)
+**Rejection**: {reject_votes:,} votes ({rejection_pct:.1f}%)
+**Total Participation**: {total_votes:,} community members
+            
+{vote_pattern}
+
+**Participation Rate Context**: 
+- High participation (>100 voters): Indicates high community interest and engagement
+- Medium participation (50-100 voters): Standard engagement for typical proposals
+- Low participation (<50 voters): May signal poor communication or low perceived impact
+
+This campaign achieved {total_votes:,} votes, indicating {'high' if total_votes > 100 else 'medium' if total_votes > 50 else 'moderate'} community engagement.""",
+            "info"
+        )
+        
+        # === SECTION 3: Validator Economics Analysis ===
+        # Calculate ROI if implemented
+        if approval_pct >= 60:
+            # Successful campaign - analyze validator investment
+            cost_per_vote = nxt_burned / max(1, total_votes)
+            reputation_gain = 10.0  # Successful campaigns boost validator reputation
+            
+            NexusAI.render_report_section(
+                "Validator Economics - Investment Analysis",
+                f"""**Total Investment**: {nxt_burned:,.0f} NXT burned
+**Acquisition Cost**: {cost_per_vote:.2f} NXT per community vote
+**Outcome**: APPROVED - Innovation will be implemented
+                
+**Validator Benefits**:
+- ✅ Reputation increase: +{reputation_gain:.1f} points ({status.get('proposer_id', 'Unknown')})
+- ✅ Community influence demonstrated through successful campaign
+- ✅ Future proposals from this validator will receive higher trust score
+- ✅ Innovation implementation credits validator as originator
+
+**ROI Analysis**:
+- Burned {nxt_burned:,.0f} NXT permanently (deflationary benefit to all NXT holders)
+- Gained governance influence and reputation (non-monetary value)
+- Community validated innovation direction (strategic alignment)
+
+**Recommendation**: Successful campaigns justify NXT burn through reputation gains and ecosystem advancement. 
+This validator's {nxt_burned:,.0f} NXT investment secured community mandate for innovation implementation.""",
+                "success"
+            )
+        else:
+            # Failed campaign - analyze lessons learned
+            cost_per_vote = nxt_burned / max(1, total_votes)
+            
+            NexusAI.render_report_section(
+                "Validator Economics - Investment Analysis",
+                f"""**Total Investment**: {nxt_burned:,.0f} NXT burned
+**Acquisition Cost**: {cost_per_vote:.2f} NXT per community vote
+**Outcome**: REJECTED - Innovation will NOT be implemented
+                
+**Validator Impact**:
+- ⚠️ {nxt_burned:,.0f} NXT burned without implementation (but still deflationary for ecosystem)
+- ⚠️ Reputation impact: Neutral (failed campaigns don't penalize validators)
+- ℹ️ Community feedback received - valuable for future proposals
+- ℹ️ Learned community priorities and concerns
+
+**Lessons Learned**:
+- Campaign achieved {approval_pct:.1f}% approval, needed 60% → {60 - approval_pct:.1f}pp gap
+- {reject_votes:,} voters rejected proposal - analyze rejection reasons in feedback
+- Cost per vote ({cost_per_vote:.2f} NXT) indicates {('efficient' if cost_per_vote < 10 else 'standard' if cost_per_vote < 20 else 'expensive')} voter acquisition
+
+**Recommendation**: {'Refine proposal based on community feedback and resubmit with adjustments' if approval_pct >= 45 else 'Major overhaul needed - fundamental concerns identified. Consider alternative approach'}.""",
+                "warning"
+            )
+        
+        # === SECTION 4: Innovation Feasibility Assessment ===
+        # Extract keywords from innovation details to assess complexity
+        details = status.get('innovation_details', '').lower()
+        
+        # Complexity indicators
+        has_budget = 'budget' in details or 'nxt' in details or '$' in details
+        has_timeline = 'month' in details or 'year' in details or 'timeline' in details
+        has_resources = 'developer' in details or 'team' in details or 'resource' in details
+        
+        complexity_score = sum([has_budget, has_timeline, has_resources])
+        
+        if complexity_score >= 2:
+            feasibility_text = """**Well-Defined Proposal**: Innovation includes budget, timeline, and resource planning.
+            
+**Implementation Readiness**: High - detailed plan provided
+**Risk Level**: Low-Medium - clear execution path defined
+**Next Steps**: Form implementation team, allocate budget, begin development"""
+        else:
+            feasibility_text = """**Conceptual Proposal**: Innovation lacks detailed implementation planning.
+            
+**Implementation Readiness**: Low - requires further specification
+**Risk Level**: Medium-High - unclear execution path
+**Next Steps**: Develop detailed budget, timeline, and resource plan before proceeding"""
+        
+        NexusAI.render_report_section(
+            "Innovation Feasibility & Implementation Assessment",
+            feasibility_text + f"""
+
+**Complexity Analysis**:
+- Budget defined: {'✅ Yes' if has_budget else '❌ No'}
+- Timeline specified: {'✅ Yes' if has_timeline else '❌ No'}
+- Resources identified: {'✅ Yes' if has_resources else '❌ No'}
+
+**Planning Score**: {complexity_score}/3 - {'Excellent' if complexity_score == 3 else 'Good' if complexity_score == 2 else 'Needs Work'}""",
+            "success" if complexity_score >= 2 else "warning"
+        )
+        
+        # === SECTION 5: Strategic Impact on NexusOS Ecosystem ===
+        # Categorize innovation type based on title/description
+        title_lower = status.get('title', '').lower()
+        desc_lower = status.get('description', '').lower()
+        
+        # Determine category
+        if 'wavelang' in title_lower or 'wave' in title_lower:
+            category = "WaveLang Ecosystem"
+            impact = "Advances physics-based programming paradigm, increases developer adoption"
+        elif 'bhls' in title_lower or 'healthcare' in title_lower or 'living' in title_lower:
+            category = "BHLS Floor Enhancement"
+            impact = "Improves citizen welfare guarantees, strengthens social foundation"
+        elif 'mesh' in title_lower or 'network' in title_lower or 'satellite' in title_lower:
+            category = "Infrastructure Expansion"
+            impact = "Extends network reach, increases censorship resistance"
+        elif 'ai' in title_lower or 'governance' in title_lower:
+            category = "Governance Innovation"
+            impact = "Improves decision-making quality, increases community participation"
+        else:
+            category = "General Innovation"
+            impact = "Contributes to ecosystem evolution and capability expansion"
+        
+        NexusAI.render_report_section(
+            f"Strategic Impact: {category}",
+            f"""**Innovation Category**: {category}
+**Primary Impact**: {impact}
+
+**Alignment with NexusOS Vision**:
+This innovation {'directly supports' if approval_pct >= 60 else 'proposes support for'} the physics-governed civilization architecture by:
+
+1. **Economic Backing**: Validator burned {nxt_burned:,.0f} NXT, demonstrating real economic commitment (not speculative)
+2. **Community Validation**: {total_votes:,} citizens participated, showing democratic governance in action
+3. **Proof of Spectrum**: Validator from {status.get('proposer_region', 'Unknown')} region ensures spectral diversity
+4. **Transparent Consensus**: All votes recorded on-chain, immutable and auditable
+
+**Ecosystem Synergies**:
+- Integrates with existing systems: {category.split()[0]} infrastructure
+- Leverages NXT tokenomics: Burn mechanism creates deflationary pressure
+- Strengthens civilization stability: Innovation reduces entropy through {category.lower()} advancement
+
+**Long-term Strategic Value**: {'HIGH' if approval_pct >= 70 else 'MEDIUM' if approval_pct >= 50 else 'LOW'} - Community approval signals alignment with civilization priorities.""",
+            "insight"
+        )
+        
+        # === SECTION 6: Community Engagement Metrics ===
+        # Calculate voting velocity (votes over time)
+        if community_votes:
+            # Sort by timestamp
+            sorted_votes = sorted(community_votes, key=lambda v: v.timestamp)
+            
+            # Early vs late voting pattern
+            midpoint = len(sorted_votes) // 2
+            early_approve = sum(1 for v in sorted_votes[:midpoint] if v.choice.name == 'APPROVE')
+            late_approve = sum(1 for v in sorted_votes[midpoint:] if v.choice.name == 'APPROVE')
+            
+            early_approve_pct = (early_approve / max(1, midpoint)) * 100
+            late_approve_pct = (late_approve / max(1, len(sorted_votes) - midpoint)) * 100
+            
+            if abs(early_approve_pct - late_approve_pct) < 10:
+                voting_pattern = "**Consistent sentiment** throughout voting period - stable community opinion"
+            elif early_approve_pct > late_approve_pct:
+                voting_pattern = "**Declining support** - later voters more skeptical, possible negative feedback loop"
+            else:
+                voting_pattern = "**Building momentum** - later voters more supportive, positive word-of-mouth effect"
+            
+            NexusAI.render_report_section(
+                "Community Engagement & Voting Dynamics",
+                f"""**Voting Pattern Analysis**:
+{voting_pattern}
+
+**Early Period Approval**: {early_approve_pct:.1f}% (first {midpoint} votes)
+**Late Period Approval**: {late_approve_pct:.1f}% (last {len(sorted_votes) - midpoint} votes)
+**Trend**: {('Positive shift +' + f'{late_approve_pct - early_approve_pct:.1f}pp') if late_approve_pct > early_approve_pct else ('Negative shift ' + f'{late_approve_pct - early_approve_pct:.1f}pp')}
+
+**Engagement Quality**:
+- Total participants: {total_votes:,} citizens
+- Participation indicates {'strong' if total_votes > 100 else 'moderate' if total_votes > 50 else 'baseline'} community interest
+- Vote distribution: {approve_votes}/{reject_votes} (approve/reject) shows {'decisive' if abs(approval_pct - 50) > 20 else 'competitive'} outcome
+
+**Trust Indicator**: {nxt_burned:,.0f} NXT burn signals validator's high confidence. Community {'validated' if approval_pct >= 60 else 'questioned'} this confidence.""",
+                "info"
+            )
+        
+        # === SECTION 7: Actionable Recommendations for Validator ===
+        recommendations = []
+        
+        if approval_pct >= 60:
+            # Successful campaign - implementation recommendations
+            recommendations.append("✅ **Begin Implementation Planning**: Assemble development team and allocate budget")
+            recommendations.append("✅ **Community Updates**: Provide monthly progress reports to maintain transparency")
+            recommendations.append("✅ **Leverage Success**: Use this approval to build support for related future proposals")
+            
+            if total_votes < 100:
+                recommendations.append("💡 **Expand Reach**: {total_votes} voters is good, but aim for 100+ in future campaigns for stronger mandate")
+            
+            if nxt_burned > 1000:
+                recommendations.append("💰 **Cost Optimization**: Consider lower NXT burn for future proposals - {nxt_burned:,.0f} may be excessive")
+        else:
+            # Failed campaign - improvement recommendations
+            gap = 60 - approval_pct
+            
+            if gap < 10:
+                recommendations.append(f"🔄 **Minor Adjustments Needed**: Only {gap:.1f}pp from approval - refine and resubmit")
+                recommendations.append("📊 **Analyze Rejection Feedback**: Interview reject voters to understand specific concerns")
+            else:
+                recommendations.append(f"⚠️ **Major Revision Required**: {gap:.1f}pp gap indicates fundamental issues")
+                recommendations.append("🔍 **Root Cause Analysis**: Deeply investigate why community rejected this innovation")
+            
+            if total_votes < 50:
+                recommendations.append("📢 **Improve Communication**: Low turnout suggests poor outreach - invest in community education")
+            
+            if nxt_burned < 300:
+                recommendations.append(f"🔥 **Increase Commitment Signal**: {nxt_burned} NXT burn may signal low confidence - consider 500+ NXT")
+            
+            recommendations.append("💬 **Community Dialog**: Host town halls to discuss innovation and address concerns")
+        
+        recommendations_text = "\n".join([f"- {r}" for r in recommendations])
+        
+        NexusAI.render_report_section(
+            "Actionable Recommendations for Validator",
+            recommendations_text,
+            "success" if approval_pct >= 60 else "warning"
+        )
+        
+        # === SECTION 8: AI Management Control Integration ===
+        ai_decision = "APPROVE_IMPLEMENTATION" if approval_pct >= 60 else "REQUIRE_REVISION"
+        
+        NexusAI.render_report_section(
+            "AI Management Control - Consensus Decision",
+            f"""**AI Governance Decision**: {ai_decision}
+
+**Reasoning**:
+- Community vote: {approval_pct:.1f}% approval ({'≥' if approval_pct >= 60 else '<'} 60% threshold)
+- Validator commitment: {nxt_burned:,.0f} NXT burned ({'adequate' if nxt_burned >= 500 else 'below recommended 500 NXT'})
+- Participation: {total_votes:,} voters ({'strong' if total_votes > 100 else 'adequate' if total_votes > 50 else 'moderate'} engagement)
+- Strategic alignment: {category} innovation {'approved' if approval_pct >= 60 else 'needs refinement'}
+
+**AI Management Actions**:
+{
+    '''- ✅ Add to implementation queue (Priority: ''' + ('HIGH' if nxt_burned > 1000 else 'MEDIUM') + ''')
+- ✅ Allocate resources from validator pool
+- ✅ Monitor implementation progress
+- ✅ Grant validator reputation bonus (+10 points)''' if approval_pct >= 60 else
+    '''- ⏸️ Return to validator for revision
+- ⏸️ Provide community feedback summary
+- ⏸️ Recommend 60-day revision period
+- ⏸️ No reputation penalty (failed campaigns encouraged for learning)'''
+}
+
+**Integration with NexusOS Systems**:
+- Civic Governance: Campaign results logged immutably
+- Validator Economics: Reputation updated, NXT burn processed
+- BHLS Floor: {('Innovation may impact floor calculations' if 'bhls' in title_lower else 'No direct BHLS impact')}
+- AI Governance: This report archived for future training data
+
+**Conclusion**: AI Management Control has analyzed {total_votes:,} community votes and recommends {'PROCEEDING' if approval_pct >= 60 else 'REVISING'} 
+this innovation based on quantitative metrics and qualitative community feedback.""",
+            "success" if approval_pct >= 60 else "info"
+        )
 
 
 def render_nexus_ai_button(component_name: str, data: Dict) -> None:

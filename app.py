@@ -47,6 +47,7 @@ from wavelength_code_interface import render_wavelength_code_interface
 from wavelang_ai_teacher import render_wavelang_ai_teacher
 from wavelang_compiler import render_wavelang_compiler_dashboard
 from quantum_wavelang_analyzer import render_quantum_wavelang_analyzer
+from civic_governance_dashboard import main as civic_governance_main
 
 
 def main():
@@ -88,6 +89,7 @@ def main():
                 "🤖 AI Management Control",
                 "💬 Talk to Nexus AI",
                 "🌐 Offline Mesh Network",
+                "🏛️ Civic Governance",
                 "🌊 WaveLang Studio",
                 "🤖 WaveLang AI Teacher",
                 "💻 WaveLang Binary Compiler",
@@ -199,6 +201,11 @@ def main():
                 "icon": "⚛️",
                 "desc": "Quantum-level program analysis using wave properties and physics mechanics",
                 "features": ["Wave Interference", "Superposition Paths", "Coherence Metrics", "Phase Locking", "Harmonics", "State Collapse"]
+            },
+            "🏛️ Civic Governance": {
+                "icon": "🏛️",
+                "desc": "Innovation campaigns where validators burn NXT to promote ideas, community votes, AI analyzes results",
+                "features": ["Create Campaigns", "Community Voting", "AI Analysis Reports", "Campaign Analytics", "NXT Burn Economics"]
             }
         }
         
@@ -298,6 +305,10 @@ def main():
     elif module == "⚛️ Quantum Analyzer":
         # Quantum-level WaveLang analysis
         render_quantum_wavelang_analyzer()
+    
+    elif module == "🏛️ Civic Governance":
+        # Civic governance innovation campaigns
+        civic_governance_main()
 
 
 if __name__ == "__main__":

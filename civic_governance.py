@@ -38,6 +38,13 @@ class VoteChoice(Enum):
     REJECT = "Reject"
     ABSTAIN = "Abstain"
 
+class CampaignStatus(Enum):
+    """Campaign lifecycle status"""
+    ACTIVE = "Active - Accepting Votes"
+    CLOSED = "Closed - Voting Complete"
+    IMPLEMENTED = "Implemented"
+    REJECTED = "Rejected by Community"
+
 @dataclass
 class Proposal:
     """Governance proposal"""
@@ -83,6 +90,58 @@ class Vote:
     weight: float = 1.0  # Can be modified by reputation
 
 
+@dataclass
+class Campaign:
+    """Innovation campaign promoted by validators burning NXT"""
+    campaign_id: str
+    title: str
+    description: str
+    innovation_details: str  # Detailed explanation of the innovation
+    proposer_id: str  # Validator who created campaign
+    nxt_burned: float  # NXT burned to promote campaign
+    creation_date: datetime = field(default_factory=datetime.now)
+    voting_deadline: Optional[datetime] = None
+    status: CampaignStatus = CampaignStatus.ACTIVE
+    
+    # Community voting results
+    votes_approve: int = 0
+    votes_reject: int = 0
+    total_voters: int = 0
+    
+    # AI analysis results (populated after voting closes)
+    ai_report_generated: bool = False
+    
+    def __post_init__(self):
+        if not self.voting_deadline:
+            # Default: 14 days voting period for campaigns
+            self.voting_deadline = self.creation_date + timedelta(days=14)
+    
+    def is_active(self) -> bool:
+        """Check if campaign is still accepting votes"""
+        return self.status == CampaignStatus.ACTIVE and datetime.now() < self.voting_deadline
+    
+    def approval_percentage(self) -> float:
+        """Calculate approval percentage"""
+        if self.total_voters == 0:
+            return 0.0
+        return (self.votes_approve / self.total_voters) * 100
+    
+    def rejection_percentage(self) -> float:
+        """Calculate rejection percentage"""
+        if self.total_voters == 0:
+            return 0.0
+        return (self.votes_reject / self.total_voters) * 100
+
+
+@dataclass
+class CommunityVote:
+    """Individual community member vote on a campaign"""
+    voter_id: str  # Citizen/community member ID
+    campaign_id: str
+    choice: VoteChoice  # APPROVE or REJECT
+    timestamp: datetime = field(default_factory=datetime.now)
+
+
 class CivicGovernance:
     """
     Manages decentralized governance using Proof of Spectrum
@@ -100,14 +159,22 @@ class CivicGovernance:
         self.proposals: Dict[str, Proposal] = {}
         self.votes: Dict[str, List[Vote]] = {}  # proposal_id -> votes
         
+        # Innovation campaigns (validators burn NXT to promote ideas)
+        self.campaigns: Dict[str, Campaign] = {}
+        self.community_votes: Dict[str, List[CommunityVote]] = {}  # campaign_id -> votes
+        self.total_nxt_burned = 0.0  # Total NXT burned for campaigns
+        
         # Governance parameters
         self.min_stake_required = 1000.0  # Minimum NXT to be validator
         self.spectral_diversity_requirement = 5  # Regions needed for approval
+        self.min_campaign_burn = 100.0  # Minimum NXT to create campaign
         
         # Statistics
         self.total_proposals = 0
         self.approved_proposals = 0
         self.rejected_proposals = 0
+        self.total_campaigns = 0
+        self.successful_campaigns = 0
     
     def register_validator(self, validator_id: str, spectral_region: SpectralRegion, 
                           stake_amount: float) -> Validator:
@@ -265,6 +332,171 @@ class CivicGovernance:
             "approved_proposals": self.approved_proposals,
             "rejected_proposals": self.rejected_proposals,
             "approval_rate": (self.approved_proposals / max(1, self.total_proposals)) * 100
+        }
+    
+    # ===== INNOVATION CAMPAIGN METHODS =====
+    
+    def create_campaign(self, campaign: Campaign) -> str:
+        """
+        Create a new innovation campaign (validator burns NXT to promote idea)
+        
+        Args:
+            campaign: Campaign object with all details
+            
+        Returns:
+            campaign_id
+        """
+        # Verify minimum burn amount
+        if campaign.nxt_burned < self.min_campaign_burn:
+            raise ValueError(f"Campaign burn {campaign.nxt_burned} below minimum {self.min_campaign_burn} NXT")
+        
+        # Verify proposer is a registered validator
+        if campaign.proposer_id not in self.validators:
+            raise ValueError(f"Proposer {campaign.proposer_id} is not a registered validator")
+        
+        # Store campaign
+        self.campaigns[campaign.campaign_id] = campaign
+        self.community_votes[campaign.campaign_id] = []
+        self.total_nxt_burned += campaign.nxt_burned
+        self.total_campaigns += 1
+        
+        return campaign.campaign_id
+    
+    def submit_community_vote(self, voter_id: str, campaign_id: str, choice: VoteChoice):
+        """
+        Community member submits vote on a campaign
+        
+        Args:
+            voter_id: Citizen/community member ID
+            campaign_id: Campaign to vote on
+            choice: APPROVE or REJECT
+        """
+        if campaign_id not in self.campaigns:
+            raise ValueError(f"Campaign {campaign_id} not found")
+        
+        campaign = self.campaigns[campaign_id]
+        
+        if not campaign.is_active():
+            raise ValueError(f"Campaign {campaign_id} is not accepting votes")
+        
+        # Check if voter already voted
+        existing_votes = [v for v in self.community_votes[campaign_id] if v.voter_id == voter_id]
+        if existing_votes:
+            raise ValueError(f"Voter {voter_id} already voted on {campaign_id}")
+        
+        # Only APPROVE/REJECT allowed for campaigns (no ABSTAIN)
+        if choice == VoteChoice.ABSTAIN:
+            raise ValueError("ABSTAIN not allowed for campaigns - choose APPROVE or REJECT")
+        
+        # Record vote
+        vote = CommunityVote(
+            voter_id=voter_id,
+            campaign_id=campaign_id,
+            choice=choice
+        )
+        
+        self.community_votes[campaign_id].append(vote)
+        
+        # Update campaign tallies
+        campaign.total_voters += 1
+        if choice == VoteChoice.APPROVE:
+            campaign.votes_approve += 1
+        elif choice == VoteChoice.REJECT:
+            campaign.votes_reject += 1
+    
+    def close_campaign(self, campaign_id: str) -> dict:
+        """
+        Close campaign voting and determine final result
+        
+        Args:
+            campaign_id: Campaign to close
+            
+        Returns:
+            Final campaign results dictionary
+        """
+        if campaign_id not in self.campaigns:
+            raise ValueError(f"Campaign {campaign_id} not found")
+        
+        campaign = self.campaigns[campaign_id]
+        
+        if campaign.status != CampaignStatus.ACTIVE:
+            raise ValueError(f"Campaign {campaign_id} already closed")
+        
+        # Calculate approval percentage
+        approval_pct = campaign.approval_percentage()
+        
+        # Determine outcome (60% approval threshold)
+        if approval_pct >= 60.0:
+            campaign.status = CampaignStatus.IMPLEMENTED
+            self.successful_campaigns += 1
+            result = "APPROVED - Implementation Recommended"
+        else:
+            campaign.status = CampaignStatus.REJECTED
+            result = "REJECTED - Insufficient Community Support"
+        
+        return {
+            "campaign_id": campaign_id,
+            "title": campaign.title,
+            "result": result,
+            "approval_percentage": approval_pct,
+            "total_votes": campaign.total_voters,
+            "votes_approve": campaign.votes_approve,
+            "votes_reject": campaign.votes_reject,
+            "nxt_burned": campaign.nxt_burned,
+            "status": campaign.status.value
+        }
+    
+    def get_campaign_status(self, campaign_id: str) -> dict:
+        """Get detailed status of a campaign"""
+        if campaign_id not in self.campaigns:
+            raise ValueError(f"Campaign {campaign_id} not found")
+        
+        campaign = self.campaigns[campaign_id]
+        votes = self.community_votes[campaign_id]
+        
+        # Get proposer details
+        proposer = self.validators.get(campaign.proposer_id)
+        proposer_region = proposer.spectral_region.value if proposer else "Unknown"
+        
+        return {
+            "campaign_id": campaign.campaign_id,
+            "title": campaign.title,
+            "description": campaign.description,
+            "innovation_details": campaign.innovation_details,
+            "proposer_id": campaign.proposer_id,
+            "proposer_region": proposer_region,
+            "nxt_burned": campaign.nxt_burned,
+            "status": campaign.status.value,
+            "is_active": campaign.is_active(),
+            "creation_date": campaign.creation_date.isoformat(),
+            "voting_deadline": campaign.voting_deadline.isoformat(),
+            "total_voters": campaign.total_voters,
+            "votes_approve": campaign.votes_approve,
+            "votes_reject": campaign.votes_reject,
+            "approval_percentage": campaign.approval_percentage(),
+            "rejection_percentage": campaign.rejection_percentage(),
+            "ai_report_generated": campaign.ai_report_generated,
+            "total_votes_cast": len(votes)
+        }
+    
+    def get_campaign_stats(self) -> dict:
+        """Get overall campaign statistics"""
+        active_campaigns = sum(1 for c in self.campaigns.values() if c.is_active())
+        
+        # Calculate average burn amount
+        avg_burn = (self.total_nxt_burned / max(1, self.total_campaigns))
+        
+        # Total community participation
+        total_community_votes = sum(len(votes) for votes in self.community_votes.values())
+        
+        return {
+            "total_campaigns": self.total_campaigns,
+            "active_campaigns": active_campaigns,
+            "successful_campaigns": self.successful_campaigns,
+            "total_nxt_burned": self.total_nxt_burned,
+            "average_burn_per_campaign": avg_burn,
+            "total_community_votes": total_community_votes,
+            "success_rate": (self.successful_campaigns / max(1, self.total_campaigns)) * 100
         }
 
 
