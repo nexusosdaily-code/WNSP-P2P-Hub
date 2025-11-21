@@ -49,6 +49,7 @@ from wavelang_compiler import render_wavelang_compiler_dashboard
 from quantum_wavelang_analyzer import render_quantum_wavelang_analyzer
 from civic_governance_dashboard import main as civic_governance_main
 from mobile_blockchain_hub import render_mobile_blockchain_hub
+from economic_loop_dashboard import render_economic_loop_dashboard
 
 
 def main():
@@ -74,6 +75,7 @@ def main():
             "**Select Dashboard**",
             [
                 "📱 Mobile Blockchain Hub",
+                "💫 Economic Loop Dashboard",
                 "🌍 Civilization Dashboard",
                 "💎 Web3 Wallet",
                 "📡 WNSP Protocol v2.0",
@@ -108,6 +110,11 @@ def main():
                 "icon": "📱",
                 "desc": "Unified mobile blockchain interface - Your phone IS the blockchain node",
                 "features": ["💎 Web3 Wallet", "📨 DAG Messaging", "🔗 Explorer", "💱 DEX", "🏛️ Validators", "⚛️ Wavelength", "🌐 Network (GhostDAG/PoS/Consensus/Mesh)", "🗳️ Governance", "🔌 Connectivity"]
+            },
+            "💫 Economic Loop Dashboard": {
+                "icon": "💫",
+                "desc": "Complete economic cycle: Messaging→Reserve→DEX→Supply Chain→Community→F_floor",
+                "features": ["📨 Messaging Burns", "⚛️ Orbital Transitions", "💧 DEX Liquidity", "🏭 Supply Chain Value", "🤝 Community Ownership", "🛡️ Crisis Protection"]
             },
             "🌍 Civilization Dashboard": {
                 "icon": "🌍",
@@ -232,6 +239,10 @@ def main():
     if module == "📱 Mobile Blockchain Hub":
         # Mobile blockchain hub - unified interface
         render_mobile_blockchain_hub()
+    
+    elif module == "💫 Economic Loop Dashboard":
+        # Economic loop system
+        render_economic_loop_dashboard()
     
     elif module == "🌍 Civilization Dashboard":
         # Full civilization dashboard with 7 tabs
