@@ -147,11 +147,32 @@ class WaveLangAITeacher:
         has_goal = any(kw in description_lower for kw in goal_keywords)
         
         # Pattern matching for common operations
+        # LOAD instruction
+        if "load" in description_lower or "read" in description_lower or "input" in description_lower:
+            numbers = re.findall(r'\d+', user_description)
+            if numbers:
+                for num in numbers[:2]:  # Up to 2 LOAD instructions
+                    instructions.append({
+                        "opcode": "LOAD",
+                        "wavelength": 495.0 if len([i for i in instructions if i["opcode"]=="LOAD"]) == 0 else 508.0,
+                        "operand": num,
+                        "explanation": f"Load value: {num}"
+                    })
+            else:
+                # Generic load without specific values
+                if not any(i["opcode"] == "LOAD" for i in instructions):
+                    instructions.append({
+                        "opcode": "LOAD",
+                        "wavelength": 495.0,
+                        "operand": "input",
+                        "explanation": "Load input data"
+                    })
+        
+        # ADD instruction
         if "add" in description_lower and ("and" in description_lower or "+" in description_lower):
-            # Extract numbers if present
             numbers = re.findall(r'\d+', user_description)
             
-            if len(numbers) >= 2:
+            if len(numbers) >= 2 and not any(i["opcode"]=="LOAD" for i in instructions):
                 instructions.append({
                     "opcode": "LOAD",
                     "wavelength": 495.0,
@@ -164,43 +185,36 @@ class WaveLangAITeacher:
                     "operand": numbers[1],
                     "explanation": f"Load second number: {numbers[1]}"
                 })
-                instructions.append({
-                    "opcode": "ADD",
-                    "wavelength": 380.0,
-                    "operand": None,
-                    "explanation": f"Add {numbers[0]} + {numbers[1]}"
-                })
-        
-        if "print" in description_lower or "output" in description_lower or "show" in description_lower:
+            
             instructions.append({
-                "opcode": "PRINT",
-                "wavelength": 650.0,
+                "opcode": "ADD",
+                "wavelength": 380.0,
                 "operand": None,
-                "explanation": "Display the result"
+                "explanation": "Add values together"
             })
         
-        if "multiply" in description_lower or "*" in description_lower:
-            numbers = re.findall(r'\d+', user_description)
-            if len(numbers) >= 2:
-                instructions.insert(0, {
-                    "opcode": "LOAD",
-                    "wavelength": 495.0,
-                    "operand": numbers[0],
-                    "explanation": f"Load first number: {numbers[0]}"
-                })
-                instructions.insert(1, {
-                    "opcode": "LOAD",
-                    "wavelength": 508.0,
-                    "operand": numbers[1],
-                    "explanation": f"Load second number: {numbers[1]}"
-                })
-                instructions.insert(2, {
+        # MULTIPLY instruction
+        if "multiply" in description_lower or "scale" in description_lower or "factor" in description_lower or "*" in description_lower:
+            # Don't require numbers for multiplication
+            if not any(i["opcode"] == "MULTIPLY" for i in instructions):
+                instructions.append({
                     "opcode": "MULTIPLY",
                     "wavelength": 392.0,
                     "operand": None,
-                    "explanation": f"Multiply numbers"
+                    "explanation": "Multiply by frequency factor"
                 })
         
+        # PRINT/OUTPUT instruction
+        if "print" in description_lower or "output" in description_lower or "show" in description_lower or "display" in description_lower:
+            if not any(i["opcode"] == "PRINT" for i in instructions):
+                instructions.append({
+                    "opcode": "PRINT",
+                    "wavelength": 650.0,
+                    "operand": None,
+                    "explanation": "Output the result"
+                })
+        
+        # LOOP instruction
         if "loop" in description_lower or "repeat" in description_lower:
             times = re.findall(r'\d+', user_description)
             if times:
@@ -211,6 +225,7 @@ class WaveLangAITeacher:
                     "explanation": f"Repeat {times[0]} times"
                 })
         
+        # IF instruction
         if "if" in description_lower or "check" in description_lower or "condition" in description_lower:
             instructions.append({
                 "opcode": "IF",
