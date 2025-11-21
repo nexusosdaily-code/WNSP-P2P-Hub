@@ -468,7 +468,14 @@ class ReserveLiquidityAllocator:
             return {
                 'total_allocations': 0,
                 'total_nxt_allocated': 0.0,
-                'pool_distribution': {}
+                'pool_distribution': {},
+                'supply_chain_weights': {
+                    'manufacturing': self.supply_chain_weights.manufacturing,
+                    'logistics': self.supply_chain_weights.logistics,
+                    'services': self.supply_chain_weights.services,
+                    'agriculture': self.supply_chain_weights.agriculture,
+                    'technology': self.supply_chain_weights.technology
+                }
             }
         
         total_nxt = sum(a['total_allocated_nxt'] for a in self.allocation_history)
