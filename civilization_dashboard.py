@@ -9,6 +9,7 @@ import plotly.express as px
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
+from copy import deepcopy
 
 # Import civilization modules
 from wave_computation import WaveComputation, WaveState, Modulation, Polarization
@@ -235,6 +236,8 @@ def render_civilization_simulator_tab():
     with col2:
         if st.button("Run Simulation", key="run_sim"):
             with st.spinner("Simulating civilization dynamics..."):
+                # Capture immutable pre-run state snapshot for accurate report comparison
+                st.session_state.sim_initial_state = deepcopy(simulator.current_state)
                 simulator.simulate_years(sim_years, verbose=False)
     
     stats = simulator.get_summary_stats()
@@ -338,7 +341,8 @@ def render_civilization_simulator_tab():
                 from nexus_ai import NexusAI
                 
                 with st.expander("📊 Nexus AI Civilization Simulation Report", expanded=True):
-                    initial_state = simulator.history[0] if simulator.history else simulator.current_state
+                    # Use captured pre-run state for accurate per-run comparison
+                    initial_state = st.session_state.get('sim_initial_state', simulator.current_state)
                     final_state = simulator.current_state
                     
                     # Prepare data for report
