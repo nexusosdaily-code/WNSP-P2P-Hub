@@ -241,19 +241,20 @@ class MessagingFlowController:
             reserve_balance_before=reserve_balance_before
         )
         
-        # 💰 ATOMIC TRANSFER: Move NXT from sender to TRANSITION_RESERVE
-        sender_account = self.token_system.get_account(sender_address)
-        if sender_account is None:
-            return (False, f"Sender account {sender_address} not found", None)
+        # 💰 PRODUCTION ATOMIC TRANSFER: Move NXT from sender to TRANSITION_RESERVE
+        # Convert NXT to units for atomic transfer (100M units per NXT)
+        burn_amount_units = int(burn_amount_nxt * self.token_system.UNITS_PER_NXT)
         
-        if sender_account.balance < burn_amount_nxt:
-            return (False, f"Insufficient balance: {sender_account.balance:.6f} < {burn_amount_nxt:.6f}", None)
+        success, tx, msg = self.token_system.transfer_atomic(
+            from_address=sender_address,
+            to_address="TRANSITION_RESERVE",
+            amount=burn_amount_units,
+            fee=0,  # No fee for orbital transitions (physics-based pricing)
+            reason=f"Orbital transition: {message_id} ({message_type})"
+        )
         
-        # Debit sender
-        sender_account.balance -= burn_amount_nxt
-        
-        # Credit TRANSITION_RESERVE
-        reserve_account.balance += burn_amount_nxt
+        if not success:
+            return (False, f"Atomic transfer failed: {msg}", None)
         
         # Record in ledger
         entry = self.ledger.add_entry(
@@ -414,19 +415,37 @@ class ReserveLiquidityAllocator:
         if reserve_account is None:
             return (False, "TRANSITION_RESERVE account not found", {})
         
-        # Verify sufficient reserve balance
-        if reserve_account.balance < reserve_amount_nxt:
-            return (False, f"Insufficient reserve balance: {reserve_account.balance:.2f} NXT", {})
+        # Convert NXT to units for balance check
+        reserve_amount_units = int(reserve_amount_nxt * self.token_system.UNITS_PER_NXT)
         
-        # Execute transfers to each pool via DEX adapter
+        # Verify sufficient reserve balance
+        if reserve_account.balance < reserve_amount_units:
+            reserve_nxt = reserve_account.balance / self.token_system.UNITS_PER_NXT
+            return (False, f"Insufficient reserve balance: {reserve_nxt:.6f} NXT < {reserve_amount_nxt:.6f} NXT", {})
+        
+        # Execute transfers to each pool via atomic transfer
         for pool_name, allocation_nxt in allocations.items():
             # Ensure pool account exists
             pool_account = self.token_system.get_account(pool_name)
             if pool_account is None:
                 self.token_system.create_account(pool_name, initial_balance=0)
             
-            # Transfer NXT from reserve to pool
-            self.dex_adapter.transfer("TRANSITION_RESERVE", pool_name, allocation_nxt)
+            # Convert NXT to units
+            allocation_units = int(allocation_nxt * self.token_system.UNITS_PER_NXT)
+            
+            # Atomic transfer from reserve to pool
+            success, tx, transfer_msg = self.token_system.transfer_atomic(
+                from_address="TRANSITION_RESERVE",
+                to_address=pool_name,
+                amount=allocation_units,
+                fee=0,
+                reason=f"Reserve liquidity allocation to {pool_name}"
+            )
+            
+            if not success:
+                # Rollback all previous allocations would be complex
+                # For now, log error (in production, use 2-phase commit)
+                print(f"⚠️ Pool allocation warning: {pool_name} - {transfer_msg}")
         
         # Record allocation
         allocation_record = {
@@ -806,29 +825,39 @@ class CrisisDrainController:
         if reserve_account is None:
             return (False, "TRANSITION_RESERVE account not found")
         
-        if reserve_account.balance < drain_amount_nxt:
-            return (False, f"Insufficient reserve balance for drain: {reserve_account.balance:.2f} NXT")
+        # Convert NXT to units for balance check
+        drain_units = int(drain_amount_nxt * self.token_system.UNITS_PER_NXT)
         
-        # Transfer to F_floor via BHLS system if available
-        if self.bhls_system is not None and hasattr(self.bhls_system, 'add_revenue_to_floor'):
-            # Integrated transfer through BHLS system
-            f_floor_before = self.bhls_system.floor_reserve_pool
-            self.bhls_system.add_revenue_to_floor("crisis_drain", drain_amount_nxt)
-            # Deduct from token system reserve
-            reserve_account.balance -= drain_amount_nxt
-            f_floor_after = self.bhls_system.floor_reserve_pool
-        else:
-            # Fallback to direct account transfer
+        if reserve_account.balance < drain_units:
+            reserve_nxt = reserve_account.balance / self.token_system.UNITS_PER_NXT
+            return (False, f"Insufficient reserve balance for drain: {reserve_nxt:.6f} NXT < {drain_amount_nxt:.6f} NXT")
+        
+        # Execute atomic transfer to F_floor (ensure account exists)
+        f_floor_account = self.token_system.get_account("F_FLOOR_RESERVE")
+        if f_floor_account is None:
+            self.token_system.create_account("F_FLOOR_RESERVE", initial_balance=0)
             f_floor_account = self.token_system.get_account("F_FLOOR_RESERVE")
-            if f_floor_account is None:
-                self.token_system.create_account("F_FLOOR_RESERVE", initial_balance=0)
-                f_floor_account = self.token_system.get_account("F_FLOOR_RESERVE")
-            
-            f_floor_before = f_floor_account.balance
-            # Execute transfer
-            reserve_account.balance -= drain_amount_nxt
-            f_floor_account.balance += drain_amount_nxt
-            f_floor_after = f_floor_account.balance
+        
+        f_floor_balance_before = f_floor_account.balance
+        
+        success, tx, transfer_msg = self.token_system.transfer_atomic(
+            from_address="TRANSITION_RESERVE",
+            to_address="F_FLOOR_RESERVE",
+            amount=drain_units,
+            fee=0,
+            reason="Crisis drain to BHLS F_floor protection"
+        )
+        
+        if not success:
+            return (False, f"Atomic drain failed: {transfer_msg}")
+        
+        # Sync with BHLS system if available
+        if self.bhls_system is not None and hasattr(self.bhls_system, 'add_revenue_to_floor'):
+            # Update BHLS floor pool tracking (informational only)
+            self.bhls_system.floor_reserve_pool += drain_amount_nxt
+        
+        f_floor_before = f_floor_balance_before / self.token_system.UNITS_PER_NXT
+        f_floor_after = f_floor_account.balance / self.token_system.UNITS_PER_NXT
         
         # Record drain event
         drain_event = {

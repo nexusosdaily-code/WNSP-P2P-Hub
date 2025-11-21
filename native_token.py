@@ -218,6 +218,101 @@ class NativeTokenSystem:
         
         return tx
     
+    def transfer_atomic(
+        self, 
+        from_address: str, 
+        to_address: str, 
+        amount: int, 
+        fee: Optional[int] = None,
+        reason: str = ""
+    ) -> tuple[bool, Optional[TokenTransaction], str]:
+        """
+        Atomic transfer with rollback support - Production-safe transaction.
+        
+        This method ensures all-or-nothing semantics: if any step fails,
+        all changes are rolled back to maintain consistency.
+        
+        Args:
+            from_address: Sender account address
+            to_address: Receiver account address
+            amount: Amount in units to transfer
+            fee: Optional transaction fee (defaults to BASE_TRANSFER_FEE)
+            reason: Optional transaction reason for logging
+        
+        Returns:
+            (success: bool, transaction: Optional[TokenTransaction], message: str)
+        
+        Example:
+            success, tx, msg = token_system.transfer_atomic(
+                "alice", "TRANSITION_RESERVE", 5700, reason="message burn"
+            )
+        """
+        if fee is None:
+            fee = self.BASE_TRANSFER_FEE
+        
+        # Step 1: Validate accounts exist
+        from_account = self.get_account(from_address)
+        if not from_account:
+            return (False, None, f"Sender account '{from_address}' not found")
+        
+        # Step 2: Validate sufficient balance (BEFORE any mutations)
+        total_deduct = amount + fee
+        if not from_account.has_sufficient_balance(total_deduct):
+            return (
+                False,
+                None,
+                f"Insufficient balance: need {total_deduct} units, have {from_account.balance} units"
+            )
+        
+        # Step 3: Snapshot balances for potential rollback
+        from_balance_before = from_account.balance
+        from_nonce_before = from_account.nonce
+        
+        to_account = self.get_or_create_account(to_address)
+        to_balance_before = to_account.balance
+        
+        validator_pool = self.get_account("VALIDATOR_POOL")
+        validator_balance_before = validator_pool.balance if validator_pool else 0
+        
+        try:
+            # Step 4: Execute transfer (atomic block)
+            from_account.balance -= total_deduct
+            from_account.nonce += 1
+            
+            to_account.balance += amount
+            
+            if fee > 0 and validator_pool:
+                validator_pool.balance += fee
+            
+            # Step 5: Create transaction record
+            tx = TokenTransaction(
+                tx_id=f"TX{self.tx_counter:08d}",
+                tx_type=TransactionType.TRANSFER,
+                from_address=from_address,
+                to_address=to_address,
+                amount=amount,
+                fee=fee,
+                data={"reason": reason} if reason else {}
+            )
+            self.tx_counter += 1
+            self.transactions.append(tx)
+            
+            return (True, tx, f"Transfer successful: {amount} units → {to_address}")
+            
+        except Exception as e:
+            # Step 6: ROLLBACK on any error
+            from_account.balance = from_balance_before
+            from_account.nonce = from_nonce_before
+            to_account.balance = to_balance_before
+            if validator_pool:
+                validator_pool.balance = validator_balance_before
+            
+            return (
+                False,
+                None,
+                f"Transfer failed and rolled back: {str(e)}"
+            )
+    
     def burn(self, from_address: str, amount: int, reason: str = "") -> Optional[TokenTransaction]:
         """Burn tokens (deflationary mechanism)"""
         from_account = self.get_account(from_address)

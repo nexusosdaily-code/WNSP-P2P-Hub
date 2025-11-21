@@ -356,19 +356,23 @@ class MobileDAGProtocol:
         # This happens asynchronously in the actual system
         # Here we simulate completion
         
-        # 🔥 ECONOMIC LOOP INTEGRATION: Process burn through token system first
-        # STEP 1: Ensure sender has on-chain account in token system
+        # 🔥 PRODUCTION ECONOMIC LOOP INTEGRATION: Atomic burn through token system
         try:
             if hasattr(self, '_token_system') and self._token_system is not None:
                 token_system = self._token_system
                 
-                # Create on-chain account if doesn't exist (sync wallet to blockchain)
+                # STEP 1: Sync wallet to on-chain (create account if doesn't exist)
                 onchain_account = token_system.get_account(wallet.wallet_id)
                 if onchain_account is None:
-                    token_system.create_account(wallet.wallet_id, initial_balance=wallet.balance_nxt)
+                    # Convert wallet NXT balance to units (100M units per NXT)
+                    wallet_units = int(wallet.balance_nxt * token_system.UNITS_PER_NXT)
+                    token_system.create_account(wallet.wallet_id, initial_balance=wallet_units)
                     onchain_account = token_system.get_account(wallet.wallet_id)
                 
-                # STEP 2: Process burn through Economic Loop (atomic transfer)
+                # STEP 2: Load on-chain balance BEFORE burn (ensure sync)
+                wallet_balance_units_before = onchain_account.balance
+                
+                # STEP 3: Process burn through Economic Loop (ATOMIC TRANSFER)
                 flow_controller = get_flow_controller(token_system)
                 success, loop_msg, event = flow_controller.process_message_burn(
                     sender_address=wallet.wallet_id,
@@ -379,19 +383,19 @@ class MobileDAGProtocol:
                 )
                 
                 if success and event:
-                    # Burn successfully processed - NXT moved to TRANSITION_RESERVE
-                    # Sync wallet balance with on-chain account
-                    wallet.balance_nxt = onchain_account.balance
+                    # ✅ Atomic transfer succeeded - sync wallet with on-chain balance
+                    wallet.balance_nxt = onchain_account.balance / token_system.UNITS_PER_NXT
                 else:
-                    # Economic loop failed - fallback to simple wallet debit
-                    wallet.balance_nxt -= burn_cost
+                    # ❌ Atomic transfer failed - no changes made (rollback handled by transfer_atomic)
+                    return (False, loop_msg, None)
             else:
-                # No token system available - simple wallet debit
+                # Fallback: No token system available - simple wallet debit (legacy mode)
                 wallet.balance_nxt -= burn_cost
         except Exception as e:
-            # Economic loop integration failed, fallback to wallet debit
-            print(f"⚠️ Economic loop warning: {e}")
-            wallet.balance_nxt -= burn_cost
+            # Critical error - rollback should have prevented partial state
+            error_msg = f"⚠️ Economic loop critical error: {e}"
+            print(error_msg)
+            return (False, error_msg, None)
         
         # Record transaction
         wallet.transactions.extend([transaction])
