@@ -496,6 +496,183 @@ class NexusAI:
             Document your findings with sensitivity analysis across parameter ranges.""",
             "insight"
         )
+    
+    @staticmethod
+    def generate_civilization_simulator_report(sim_data: Dict) -> None:
+        """Generate comprehensive report for Civilization Simulator results with global debt analysis"""
+        st.markdown("### 🤖 Nexus AI Civilization Simulation Report")
+        st.markdown("---")
+        
+        # Extract simulation data
+        initial_state = sim_data.get('initial_state', {})
+        final_state = sim_data.get('final_state', {})
+        stats = sim_data.get('stats', {})
+        simulation_days = stats.get('simulation_days', 0)
+        simulation_years = simulation_days / 365
+        
+        # Global debt calculations
+        initial_debt = initial_state.get('global_debt_usd', 300_000_000_000_000.0)
+        final_debt = final_state.get('global_debt_usd', 300_000_000_000_000.0)
+        debt_growth_pct = ((final_debt - initial_debt) / initial_debt * 100) if initial_debt > 0 else 0
+        debt_increase_usd = final_debt - initial_debt
+        
+        initial_nxt = initial_state.get('nxt_supply', 1)
+        final_nxt = final_state.get('nxt_supply', 1)
+        
+        initial_backing_ratio = initial_debt / initial_nxt if initial_nxt > 0 else 0
+        final_backing_ratio = final_debt / final_nxt if final_nxt > 0 else 0
+        backing_ratio_change_pct = ((final_backing_ratio - initial_backing_ratio) / initial_backing_ratio * 100) if initial_backing_ratio > 0 else 0
+        
+        daily_floor_credits = final_state.get('debt_backed_floor_credits', 0)
+        final_population = final_state.get('population', 1)
+        
+        # === SECTION 1: Simulation Overview ===
+        NexusAI.render_report_section(
+            "Simulation Configuration",
+            f"""Simulated {simulation_days:,} days ({simulation_years:.1f} years) of civilization dynamics using the Nexus differential equation:
+            
+            **dN/dt = αC + βD + γE - δEntropy + PID**
+            
+            This equation models how Contribution (C), Distribution (D), Economic growth (E), and Entropy interact with 
+            PID control to regulate NXT supply. The simulation tracks population growth, BHLS floor sustainability, 
+            and most critically: **how $300T+ global debt backs NXT value and funds basic living standards**.""",
+            "info"
+        )
+        
+        # === SECTION 2: Global Debt Backing Analysis ===
+        NexusAI.render_report_section(
+            "Global Debt Backing Mechanism - Core Innovation",
+            f"""NexusOS anchors NXT value to the $300+ trillion global debt pool. As sovereign debt expands (inevitable under 
+            fiat systems), each NXT token gains intrinsic backing value. This is NOT speculative - it's mathematical reality:
+            
+            **Initial State (Day 0)**:
+            - Global Debt: ${initial_debt/1e12:.2f}T USD
+            - NXT Supply: {initial_nxt:,.0f} tokens
+            - Debt per NXT: ${initial_backing_ratio:,.2f} USD/token
+            
+            **Final State (Day {simulation_days:,})**:
+            - Global Debt: ${final_debt/1e12:.2f}T USD ({debt_growth_pct:+.2f}%)
+            - NXT Supply: {final_nxt:,.0f} tokens
+            - Debt per NXT: ${final_backing_ratio:,.2f} USD/token ({backing_ratio_change_pct:+.2f}%)
+            
+            **Debt Growth Impact**:
+            - Total debt increase: ${debt_increase_usd/1e12:.2f}T USD
+            - This additional debt backing flows to BHLS floor as guaranteed purchasing power
+            - Daily floor credits from debt: {daily_floor_credits:,.2f} NXT ({daily_floor_credits/final_population:.4f} NXT per citizen)""",
+            "success" if debt_growth_pct > 0 else "warning"
+        )
+        
+        # === SECTION 3: BHLS Floor Sustainability ===
+        floor_reserve = final_state.get('bhls_floor_reserve', 0)
+        daily_floor_cost = final_population * 3.75
+        sustainability_days = floor_reserve / daily_floor_cost if daily_floor_cost > 0 else 0
+        
+        if sustainability_days > 365:
+            sust_type = "success"
+            sust_msg = f"""Excellent BHLS floor sustainability: {sustainability_days:.0f} days ({sustainability_days/365:.1f} years) of 
+            guaranteed basic living standards at current population. The floor reserve of {floor_reserve:,.0f} NXT can support 
+            {final_population:,} citizens at 1,150 NXT/month (3.75 NXT/day) for over a year. **Debt backing contributes 
+            {daily_floor_credits:,.2f} NXT daily**, ensuring perpetual floor funding as global debt grows."""
+        elif sustainability_days > 90:
+            sust_type = "info"
+            sust_msg = f"""Adequate BHLS floor sustainability: {sustainability_days:.0f} days of reserves. Floor can support {final_population:,} 
+            citizens for {sustainability_days/30:.1f} months. Debt backing adds {daily_floor_credits:,.2f} NXT daily to extend runway. 
+            Monitor population growth vs. debt backing flow."""
+        else:
+            sust_type = "warning"
+            sust_msg = f"""Low BHLS floor reserves: Only {sustainability_days:.0f} days remaining at current burn rate. While debt backing 
+            provides {daily_floor_credits:,.2f} NXT daily, may be insufficient for {final_population:,} citizens. Increase recycling 
+            participation or adjust floor parameters."""
+        
+        NexusAI.render_report_section("BHLS Floor Sustainability Analysis", sust_msg, sust_type)
+        
+        # === SECTION 4: Population & Economic Growth ===
+        initial_pop = initial_state.get('population', 1)
+        pop_growth_pct = stats.get('population_growth_percent', 0)
+        nxt_change_pct = stats.get('nxt_supply_change_percent', 0)
+        final_stability = stats.get('final_stability_index', 0)
+        avg_stability = stats.get('avg_stability_index', 0)
+        
+        NexusAI.render_report_section(
+            "Civilization Growth Dynamics",
+            f"""Over {simulation_years:.1f} years, the civilization evolved significantly:
+            
+            **Population**: {initial_pop:,} → {final_population:,} citizens ({pop_growth_pct:+.1f}%)
+            **NXT Supply**: {initial_nxt:,.0f} → {final_nxt:,.0f} tokens ({nxt_change_pct:+.1f}%)
+            **Stability Index**: {avg_stability:.2%} average, {final_stability:.2%} final
+            
+            The NXT supply adjusted automatically via the Nexus equation to maintain economic balance. {'Positive' if nxt_change_pct > 0 else 'Negative'} 
+            supply change indicates {'expansion' if nxt_change_pct > 0 else 'contraction'} driven by civilization metrics (contribution, 
+            distribution, growth, entropy).""",
+            "success" if final_stability > 0.7 else "warning"
+        )
+        
+        # === SECTION 5: Research Applications ===
+        NexusAI.render_report_section(
+            "Civilization Economics Research Framework",
+            f"""This simulation demonstrates NexusOS's revolutionary debt-backing mechanism. Research applications:
+            
+            **Debt Backing Theory**:
+            - Test how different debt growth rates (3%, 5%, 7% annually) affect NXT value accrual
+            - Model scenarios where debt grows faster/slower than NXT supply
+            - Calculate optimal USD→NXT conversion rates for floor credit distribution
+            - Analyze per-citizen debt backing allocation under different population curves
+            
+            **BHLS Floor Economics**:
+            - Measure floor sustainability under varying recycling participation rates (50%, 70%, 90%)
+            - Test shock scenarios: population surges, message burn reductions, recycling collapse
+            - Optimize floor credit distribution: daily vs. weekly vs. monthly batches
+            - Calculate minimum debt backing required for perpetual floor funding
+            
+            **Multi-Variable Sensitivity Analysis**:
+            - Run parameter sweeps: α, β, γ, δ (Nexus equation coefficients)
+            - Test PID controller tuning (Kp, Ki, Kd) for different stability targets
+            - Compare entropy reduction strategies: recycling vs. circular economy vs. supply chain efficiency
+            - Model validator incentive impacts on contribution index (C parameter)
+            
+            **Long-Term Projections**:
+            - 50-year simulations: Can debt backing sustain BHLS indefinitely?
+            - Generational stability: Does civilization health improve over time?
+            - Economic equilibrium: At what debt/NXT ratio does system stabilize?
+            - Catastrophic scenario testing: What if global debt stops growing?
+            
+            **Comparative Studies**:
+            - NexusOS (debt-backed) vs. Bitcoin (fixed supply) vs. Fiat (inflationary)
+            - Spectral diversity consensus vs. Proof-of-Work energy costs
+            - Wavelength validation vs. SHA-256 computational requirements
+            
+            Use this simulation to validate theories about physics-governed civilizations that guarantee basic living 
+            standards through mathematical certainty rather than political promises.""",
+            "insight"
+        )
+        
+        # === SECTION 6: Key Findings Summary ===
+        findings = []
+        
+        if debt_growth_pct > 4.5:
+            findings.append(f"✅ Global debt grew {debt_growth_pct:.1f}% - Strong NXT value backing")
+        
+        if backing_ratio_change_pct > 0:
+            findings.append(f"✅ Debt per NXT increased {backing_ratio_change_pct:.1f}% - Value accrual confirmed")
+        
+        if sustainability_days > 365:
+            findings.append(f"✅ BHLS floor funded for {sustainability_days/365:.1f} years - Citizens protected")
+        
+        if final_stability > 0.8:
+            findings.append(f"✅ High stability ({final_stability:.1%}) - Civilization thriving")
+        elif final_stability < 0.5:
+            findings.append(f"⚠️ Low stability ({final_stability:.1%}) - Intervention needed")
+        
+        if daily_floor_credits > daily_floor_cost * 0.1:
+            findings.append(f"✅ Debt backing provides {daily_floor_credits/daily_floor_cost*100:.1f}% of daily floor costs")
+        
+        findings_text = "\n".join([f"- {f}" for f in findings])
+        
+        NexusAI.render_report_section(
+            "Key Simulation Findings",
+            findings_text if findings else "Run simulation to generate findings",
+            "success" if len([f for f in findings if '✅' in f]) >= 3 else "info"
+        )
 
 
 def render_nexus_ai_button(component_name: str, data: Dict) -> None:
@@ -530,7 +707,8 @@ def render_nexus_ai_button(component_name: str, data: Dict) -> None:
                 'validator_economics': ai.generate_validator_economics_report,
                 'dex': ai.generate_dex_report,
                 'wnsp': ai.generate_wnsp_report,
-                'supply_sustainability': ai.generate_supply_sustainability_report
+                'supply_sustainability': ai.generate_supply_sustainability_report,
+                'civilization_simulator': ai.generate_civilization_simulator_report
             }
             
             generator = report_generators.get(component_name)

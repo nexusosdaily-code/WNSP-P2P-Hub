@@ -331,6 +331,37 @@ def render_civilization_simulator_tab():
                 template="plotly_dark"
             )
             st.plotly_chart(fig2, width='stretch')
+            
+            # Nexus AI Comprehensive Report
+            st.divider()
+            if st.button("🤖 Generate Comprehensive Simulation Report", key="sim_ai_report"):
+                from nexus_ai import NexusAI
+                
+                with st.expander("📊 Nexus AI Civilization Simulation Report", expanded=True):
+                    initial_state = simulator.history[0] if simulator.history else simulator.current_state
+                    final_state = simulator.current_state
+                    
+                    # Prepare data for report
+                    sim_data = {
+                        'initial_state': {
+                            'global_debt_usd': initial_state.global_debt_usd,
+                            'nxt_supply': initial_state.nxt_supply,
+                            'population': initial_state.population,
+                            'bhls_floor_reserve': initial_state.bhls_floor_reserve,
+                            'stability_index': initial_state.stability_index
+                        },
+                        'final_state': {
+                            'global_debt_usd': final_state.global_debt_usd,
+                            'nxt_supply': final_state.nxt_supply,
+                            'population': final_state.population,
+                            'bhls_floor_reserve': final_state.bhls_floor_reserve,
+                            'stability_index': final_state.stability_index,
+                            'debt_backed_floor_credits': final_state.debt_backed_floor_credits
+                        },
+                        'stats': stats
+                    }
+                    
+                    NexusAI.generate_civilization_simulator_report(sim_data)
 
 def render_governance_tab():
     """Render civic governance"""
