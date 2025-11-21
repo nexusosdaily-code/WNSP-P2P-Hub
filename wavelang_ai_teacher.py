@@ -139,11 +139,16 @@ class WaveLangAITeacher:
         
         description_lower = user_description.lower()
         instructions = []
+        import re
+        
+        # Check for goal-oriented descriptions (encoder, decoder, converter, etc.)
+        goal_keywords = ["encoder", "encod", "decode", "decod", "convert", "transform", 
+                        "process", "filter", "validator", "validator", "perfect"]
+        has_goal = any(kw in description_lower for kw in goal_keywords)
         
         # Pattern matching for common operations
         if "add" in description_lower and ("and" in description_lower or "+" in description_lower):
             # Extract numbers if present
-            import re
             numbers = re.findall(r'\d+', user_description)
             
             if len(numbers) >= 2:
@@ -175,7 +180,6 @@ class WaveLangAITeacher:
             })
         
         if "multiply" in description_lower or "*" in description_lower:
-            import re
             numbers = re.findall(r'\d+', user_description)
             if len(numbers) >= 2:
                 instructions.insert(0, {
@@ -198,7 +202,6 @@ class WaveLangAITeacher:
                 })
         
         if "loop" in description_lower or "repeat" in description_lower:
-            import re
             times = re.findall(r'\d+', user_description)
             if times:
                 instructions.append({
@@ -215,6 +218,19 @@ class WaveLangAITeacher:
                 "operand": None,
                 "explanation": "Conditional branching"
             })
+        
+        # If no instructions matched but description has goal keywords, provide a template
+        if not instructions and has_goal:
+            return {
+                "status": "goal_recognized",
+                "instructions": [],
+                "explanation": f"✨ I recognize you want to build an encoder!\n\nTo help you better, be more specific about:\n1. **What are you encoding?** (numbers, text, signals?)\n2. **What's the process?** (add, transform, validate?)\n3. **What's the output?** (show result, store it?)\n\n**Example descriptions that work:**\n- \"Add 5 and 3, then print the result\"\n- \"Load a number, multiply by 2, print it\"\n- \"Encode data using addition and output\"\n- \"Check if number is greater than 10\"",
+                "suggestions": [
+                    "Try: 'Add wavelength values and print the encoded result'",
+                    "Try: 'Load input, multiply by frequency factor, output encoded signal'",
+                    "Try: 'Create a validator that checks wavelength range'"
+                ]
+            }
         
         return {
             "status": "success" if instructions else "no_match",
