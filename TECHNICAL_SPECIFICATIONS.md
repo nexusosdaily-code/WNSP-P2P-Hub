@@ -4,6 +4,44 @@
 
 ---
 
+## 📚 Table of Contents
+
+**Complete Technical Reference for Developers & Engineers**
+
+### ⚡ Core Systems
+1. [**Atomic Transfer System**](#1-production-grade-atomic-transfer-system--new) - All-or-nothing transaction safety
+2. [**Global Debt Backing**](#2-global-debt-backing-for-cryptocurrency-tokens) - Real-world value integration
+3. [**Wavelength Cryptography**](#3-wavelength-based-cryptography-system) - Physics-based encryption
+
+### 🌊 Wavelength Infrastructure
+4. [**Wavelength Validation**](#4-wavelength-based-message-validation) - Maxwell equations replace SHA-256
+5. [**WNSP v2.0 Protocol**](#5-wnsp-v20-protocol) - Optical mesh networking
+6. [**5D Wave Signatures**](#6-5d-wave-signature-validation) - Multi-dimensional security
+
+### 🔄 Economic Systems
+7. [**Economic Loop Controller**](#7-economic-loop-controller-5-milestone-architecture) - Messaging→DEX→Floor
+8. [**DEX (Decentralized Exchange)**](#8-dex-decentralized-exchange) - Automated market maker
+9. [**BHLS Floor System**](#9-bhls-floor-system) - Living standards guarantees
+
+### 🧠 AI & Optimization
+10. [**Differential Equation Solver**](#10-differential-equation-solver-with-conservation-constraints) - PID control & constraints
+11. [**AI Management Dashboard**](#11-ai-management-control-dashboard) - Centralized AI governance
+12. [**Hybrid Routing AI**](#12-hybrid-ai-routing-controller) - Online/offline path selection
+
+### 🕸️ Consensus & Networking
+13. [**GhostDAG Consensus**](#13-ghostdag-consensus-mechanism) - Parallel block processing
+14. [**Proof of Spectrum**](#14-proof-of-spectrum-consensus) - Wavelength-based validation
+15. [**Offline Mesh Network**](#15-offline-mesh-network) - Peer-to-peer connectivity
+
+### 💻 Application Layer
+16. [**Mobile Blockchain Hub**](#16-mobile-blockchain-hub) - Unified interface
+17. [**WaveLang Ecosystem**](#17-wavelang-ecosystem) - Quantum programming language
+18. [**Civic Governance**](#18-civic-governance-campaign-system) - Validator campaigns
+
+**Perfect for**: Backend engineers, blockchain developers, system architects, protocol designers
+
+---
+
 ## 1. Production-Grade Atomic Transfer System ⚡ NEW
 
 ### Problem Statement

@@ -4,6 +4,35 @@
 
 ---
 
+## 📚 Table of Contents
+
+**Developer's Cheat Sheet - Fast Lookup**
+
+### ⚡ Quick Reference
+1. [**Core Equations**](#core-equations) - Planck-Einstein, wave equation, interference
+2. [**5 Wave Dimensions**](#5-wave-dimensions) - λ, A, φ, P, t table
+3. [**WNSP Encoding Map**](#wnsp-encoding-map) - Character-to-wavelength mapping
+
+### 🔐 Security Properties
+4. [**Collision Resistance**](#collision-resistance) - P(collision) < 2⁻²⁵⁶
+5. [**Quantum Resistance**](#quantum-resistance) - Why quantum computers can't break this
+6. [**Sensitivity**](#sensitivity) - How small changes affect patterns
+
+### 💻 Implementation
+7. [**Quick Start Code**](#implementation-quick-start) - Copy-paste examples
+   - Create wave signature, compute interference, WNSP encoding, validation
+8. [**Performance Benchmarks**](#performance-benchmarks) - Operation timings
+9. [**Spectral Region Economics**](#spectral-region-economics) - Cost by wavelength
+
+### 🛠️ Developer Tips
+10. [**Debugging Tips**](#debugging-tips) - Visualization & verification
+11. [**Common Pitfalls**](#common-pitfalls) - What to avoid
+12. [**File Locations**](#file-locations) - Where to find the code
+
+**Perfect for**: Quick lookups, code snippets, formula reference
+
+---
+
 ## Core Equations
 
 ### Planck-Einstein Relation

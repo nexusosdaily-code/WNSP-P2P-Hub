@@ -11,6 +11,34 @@
 
 ---
 
+## 📚 Table of Contents
+
+**Quick Navigation for All Users**
+
+### 🎯 Getting Started
+- [**Latest Updates**](#-latest-update-production-grade-atomic-transfer-system-nov-21-2025) - Atomic transfers, mobile wallet, WNSP v2.0
+- [**What Makes NexusOS Revolutionary**](#-what-makes-nexusos-revolutionary) - Core vision & differentiators
+- [**Scientific Documentation**](#-scientific-documentation-new) - Physics-based validation explained
+
+### 🔬 Technical Deep Dives
+- [**Platform Features**](#-platform-features) - Wavelength infrastructure, economic loops, AI systems
+- [**Technology Stack**](#-technology-stack) - Python, Streamlit, PostgreSQL
+- [**Installation & Setup**](#️-installation--setup) - Local deployment guide
+- [**API Documentation**](#-api-documentation) - Developer interfaces
+
+### 🌊 Core Systems
+- [**Wavelength Infrastructure**](#-wavelength-infrastructure) - WNSP v2.0, wave validation
+- [**Economic Architecture**](#-economic-architecture) - 5-milestone loop, debt backing
+- [**Blockchain Consensus**](#-blockchain-consensus) - GhostDAG, Proof of Spectrum
+- [**Mobile & Connectivity**](#-mobile--connectivity) - Wallet, mesh networking
+
+### 📖 Resources
+- [**Examples & Tutorials**](#-examples--tutorials) - Code samples
+- [**Contributing**](#-contributing) - How to help
+- [**License**](#-license) - MIT open source
+
+---
+
 ## ⚡ LATEST UPDATE: Production-Grade Atomic Transfer System (Nov 21, 2025)
 
 **Transaction Safety Guaranteed** - Every NXT transfer now executes with all-or-nothing semantics:

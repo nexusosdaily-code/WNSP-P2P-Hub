@@ -1,5 +1,31 @@
 # Atomic Transfer System - Quick Start Guide
 
+## 📚 Table of Contents
+
+**Fast-Track Guide for Developers**
+
+### ⚡ Getting Started
+1. [**What is the Atomic Transfer System?**](#what-is-the-atomic-transfer-system) - Overview
+2. [**Quick Example**](#quick-example) - Copy-paste code to get started
+
+### 🔧 Understanding Atomicity
+3. [**How It Works**](#how-it-works) - 3-step process (snapshot, execute, rollback)
+4. [**Why Use Atomic Transfers?**](#why-use-atomic-transfers) - Safety benefits
+
+### 💻 Practical Usage
+5. [**Basic Transfers**](#basic-transfers) - Standard account-to-account transfers
+6. [**Economic Loop Usage**](#economic-loop-usage) - Message burns, DEX allocations
+7. [**Error Handling**](#error-handling) - Dealing with failures
+
+### 📊 Advanced Topics
+8. [**Integration Examples**](#integration-examples) - Real-world code patterns
+9. [**Best Practices**](#best-practices) - Do's and Don'ts
+10. [**Performance Tips**](#performance-tips) - Optimization strategies
+
+**Perfect for**: Python developers, NexusOS integrators, blockchain app builders
+
+---
+
 ## What is the Atomic Transfer System?
 
 The Atomic Transfer System ensures **all-or-nothing** transaction safety in NexusOS. If any step of a transfer fails, all changes are automatically rolled back - preventing partial states and balance corruption.

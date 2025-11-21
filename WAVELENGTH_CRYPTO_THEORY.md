@@ -1,5 +1,32 @@
 # Wavelength Cryptography: Electromagnetic Theory-Based Encryption
 
+## 📚 Table of Contents
+
+**Quick Navigation for Developers & Cryptographers**
+
+### 🎯 Introduction
+1. [**Overview**](#overview) - What is wavelength cryptography?
+2. [**Theoretical Foundation**](#theoretical-foundation) - Electromagnetic wave theory basics
+   - Energy-wavelength relationship, electron energy levels, wave properties
+
+### 🔐 Encryption Methods
+3. [**Frequency Shift Encryption (FSE)**](#1-frequency-shift-encryption-fse) - Simulating electron energy transitions
+4. [**Amplitude Modulation Encryption (AME)**](#2-amplitude-modulation-encryption-ame) - Varying photon intensity
+5. [**Phase Modulation Encryption (PME)**](#3-phase-modulation-encryption-pme) - Manipulating wave phase
+6. [**Quantum-Inspired Multi-Layer (QIML)**](#4-quantum-inspired-multi-layer-qiml) - Combined security
+
+### 🛠️ Implementation
+7. [**Physical Constants**](#physical-constants) - Planck constant, speed of light, wavelength ranges
+8. [**Practical Implementation**](#practical-implementation) - Message flow & key derivation
+9. [**Security Properties**](#security-properties) - Strengths & considerations
+
+### 📖 Advanced Topics
+10. [**Use Cases**](#use-cases) - Educational, simulation, research
+11. [**DAG Integration**](#dag-integration) - Workflow integration
+12. [**Performance Metrics**](#performance-metrics) - Benchmarks & optimization
+
+---
+
 ## Overview
 
 Wavelength Cryptography is a novel encryption approach based on electromagnetic wave theory and quantum mechanics principles. It transforms text messages into wavelength-encoded optical signals, then applies cryptographic transformations inspired by physical phenomena.

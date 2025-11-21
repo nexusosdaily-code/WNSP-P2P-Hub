@@ -6,6 +6,36 @@
 
 ---
 
+## 📚 Table of Contents
+
+**Complete Production-Safe Transaction System Guide**
+
+### 🎯 Overview
+1. [**Executive Summary**](#executive-summary) - All-or-nothing transaction guarantees
+2. [**Architecture Overview**](#architecture-overview) - System components & integration points
+
+### 🔧 Core Implementation
+3. [**transfer_atomic() Function**](#core-implementation-transfer_atomic) - Production-safe transaction method
+   - Function signature, transaction flow, rollback mechanics
+4. [**Safety Guarantees**](#safety-guarantees) - What atomicity protects against
+5. [**Error Handling**](#error-handling) - Automatic rollback scenarios
+
+### 🔗 Integration Points
+6. [**Economic Loop Integration**](#economic-loop-integration) - How messaging burns use atomicity
+   - MessagingFlowController, ReserveLiquidityAllocator, CrisisDrainController
+7. [**Wallet Synchronization**](#wallet-synchronization) - mobile_dag_protocol integration
+8. [**DEX Integration**](#dex-integration) - Liquidity pool safety
+
+### 📊 Advanced Topics
+9. [**Performance Analysis**](#performance-analysis) - Benchmarks & optimization
+10. [**Testing & Validation**](#testing--validation) - Test scenarios & edge cases
+11. [**Migration Guide**](#migration-guide) - Upgrading from non-atomic transfers
+12. [**Troubleshooting**](#troubleshooting) - Common issues & solutions
+
+**Perfect for**: Backend developers, blockchain engineers, system architects
+
+---
+
 ## Executive Summary
 
 The NexusOS Atomic Transfer System provides production-grade transaction safety with all-or-nothing semantics. Every token transfer either completes fully or rolls back automatically, preventing partial states and ensuring data consistency across the entire economic loop.
