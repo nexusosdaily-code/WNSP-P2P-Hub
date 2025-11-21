@@ -430,12 +430,13 @@ class WaveLangPipeline:
         # ADD instruction
         if "add" in description_lower or "sum" in description_lower or "+" in user_description:
             numbers = re.findall(r'\d+', user_description)
+            variables = re.findall(r'\b([A-Z])\b', user_description)  # Single uppercase letters
             
             # Check if we need to add LOAD instructions first
             needs_loads = not any(i["opcode"] == "LOAD" for i in instructions)
             
             if len(numbers) >= 2 and needs_loads:
-                # Explicit numbers provided (e.g., "add 5 and 3")
+                # Explicit numbers provided (e.g., "5 + 3")
                 instructions.append({
                     "opcode": "LOAD",
                     "wavelength": 495.0,
@@ -448,19 +449,33 @@ class WaveLangPipeline:
                     "operand": numbers[1],
                     "explanation": f"Load second number: {numbers[1]}"
                 })
+            elif len(variables) >= 2 and needs_loads:
+                # Variables provided (e.g., "A + B")
+                instructions.append({
+                    "opcode": "LOAD",
+                    "wavelength": 495.0,
+                    "operand": variables[0],
+                    "explanation": f"Load variable {variables[0]}"
+                })
+                instructions.append({
+                    "opcode": "LOAD",
+                    "wavelength": 508.0,
+                    "operand": variables[1],
+                    "explanation": f"Load variable {variables[1]}"
+                })
             elif needs_loads and ("two" in description_lower or "number" in description_lower):
                 # Generic "add two numbers" without explicit values
                 instructions.append({
                     "opcode": "LOAD",
                     "wavelength": 495.0,
                     "operand": "A",
-                    "explanation": "Load first number (A)"
+                    "explanation": "Load first value (A)"
                 })
                 instructions.append({
                     "opcode": "LOAD",
                     "wavelength": 508.0,
                     "operand": "B",
-                    "explanation": "Load second number (B)"
+                    "explanation": "Load second value (B)"
                 })
             
             instructions.append({
@@ -473,6 +488,7 @@ class WaveLangPipeline:
         # SUBTRACT instruction
         if "subtract" in description_lower or "minus" in description_lower or "-" in user_description:
             numbers = re.findall(r'\d+', user_description)
+            variables = re.findall(r'\b([A-Z])\b', user_description)
             needs_loads = not any(i["opcode"] == "LOAD" for i in instructions)
             
             if len(numbers) >= 2 and needs_loads:
@@ -488,18 +504,31 @@ class WaveLangPipeline:
                     "operand": numbers[1],
                     "explanation": f"Load second number: {numbers[1]}"
                 })
+            elif len(variables) >= 2 and needs_loads:
+                instructions.append({
+                    "opcode": "LOAD",
+                    "wavelength": 495.0,
+                    "operand": variables[0],
+                    "explanation": f"Load variable {variables[0]}"
+                })
+                instructions.append({
+                    "opcode": "LOAD",
+                    "wavelength": 508.0,
+                    "operand": variables[1],
+                    "explanation": f"Load variable {variables[1]}"
+                })
             elif needs_loads and ("two" in description_lower or "number" in description_lower):
                 instructions.append({
                     "opcode": "LOAD",
                     "wavelength": 495.0,
                     "operand": "A",
-                    "explanation": "Load first number (A)"
+                    "explanation": "Load first value (A)"
                 })
                 instructions.append({
                     "opcode": "LOAD",
                     "wavelength": 508.0,
                     "operand": "B",
-                    "explanation": "Load second number (B)"
+                    "explanation": "Load second value (B)"
                 })
             
             if not any(i["opcode"] == "SUBTRACT" for i in instructions):
@@ -513,6 +542,7 @@ class WaveLangPipeline:
         # DIVIDE instruction
         if "divide" in description_lower or "÷" in user_description or "/" in user_description:
             numbers = re.findall(r'\d+', user_description)
+            variables = re.findall(r'\b([A-Z])\b', user_description)
             needs_loads = not any(i["opcode"] == "LOAD" for i in instructions)
             
             if len(numbers) >= 2 and needs_loads:
@@ -527,6 +557,19 @@ class WaveLangPipeline:
                     "wavelength": 508.0,
                     "operand": numbers[1],
                     "explanation": f"Load second number: {numbers[1]}"
+                })
+            elif len(variables) >= 2 and needs_loads:
+                instructions.append({
+                    "opcode": "LOAD",
+                    "wavelength": 495.0,
+                    "operand": variables[0],
+                    "explanation": f"Load variable {variables[0]}"
+                })
+                instructions.append({
+                    "opcode": "LOAD",
+                    "wavelength": 508.0,
+                    "operand": variables[1],
+                    "explanation": f"Load variable {variables[1]}"
                 })
             elif needs_loads and ("two" in description_lower or "number" in description_lower):
                 instructions.append({
@@ -553,6 +596,7 @@ class WaveLangPipeline:
         # MULTIPLY instruction  
         if "multiply" in description_lower or "scale" in description_lower or "factor" in description_lower or "*" in user_description or "×" in user_description or "times" in description_lower:
             numbers = re.findall(r'\d+', user_description)
+            variables = re.findall(r'\b([A-Z])\b', user_description)
             
             # Check if we need to add LOAD instructions first
             needs_loads = not any(i["opcode"] == "LOAD" for i in instructions)
@@ -570,6 +614,19 @@ class WaveLangPipeline:
                     "wavelength": 508.0,
                     "operand": numbers[1],
                     "explanation": f"Load second number: {numbers[1]}"
+                })
+            elif len(variables) >= 2 and needs_loads:
+                instructions.append({
+                    "opcode": "LOAD",
+                    "wavelength": 495.0,
+                    "operand": variables[0],
+                    "explanation": f"Load variable {variables[0]}"
+                })
+                instructions.append({
+                    "opcode": "LOAD",
+                    "wavelength": 508.0,
+                    "operand": variables[1],
+                    "explanation": f"Load variable {variables[1]}"
                 })
             elif needs_loads and "factor" in description_lower:
                 # Generic multiplication by factor (no explicit numbers)
