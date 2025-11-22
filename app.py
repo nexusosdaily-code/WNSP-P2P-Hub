@@ -52,6 +52,7 @@ from mobile_blockchain_hub import render_mobile_blockchain_hub
 from economic_loop_dashboard import render_economic_loop_dashboard
 from avogadro_economics_dashboard import main as avogadro_economics_main
 from napp_deployment_center import render_napp_deployment_center
+from transaction_search_explorer import render_transaction_search_explorer
 
 
 def main():
@@ -90,6 +91,7 @@ def main():
                 "📡 WNSP Protocol v2.0",
                 "💬 Mobile DAG Messaging",
                 "🔗 Blockchain Explorer",
+                "🔍 Transaction Search Explorer",
                 "🚀 Napp Deployment Center",
                 "💱 DEX (Token Exchange)",
                 "⚡ GhostDAG System",
@@ -155,6 +157,11 @@ def main():
                 "icon": "🔗",
                 "desc": "Real-time blockchain visualization and transaction explorer",
                 "features": ["Live Blocks", "Transaction History", "Network Stats", "Validator Activity"]
+            },
+            "🔍 Transaction Search Explorer": {
+                "icon": "🔍",
+                "desc": "Search addresses and transactions with physics metrics - READ ONLY, safe to use",
+                "features": ["🔍 Address Search", "📊 Transaction Lookup", "💬 Message History", "🌐 Network Stats", "⚛️ E=hf Energy Metrics", "🌊 Wavelength Proofs", "✅ Quantum Security Validation"]
             },
             "🚀 Napp Deployment Center": {
                 "icon": "🚀",
@@ -287,6 +294,10 @@ def main():
     elif module == "🔗 Blockchain Explorer":
         # Blockchain visualization
         render_blockchain_dashboard()
+    
+    elif module == "🔍 Transaction Search Explorer":
+        # Transaction and address search (READ-ONLY)
+        render_transaction_search_explorer()
     
     elif module == "🚀 Napp Deployment Center":
         # Napp deployment center - smart contract generator + explorer

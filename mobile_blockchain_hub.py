@@ -257,6 +257,16 @@ def render_blockchain_tab():
         
         st.markdown("""
         <div class="module-card">
+            <h3>🔍 Transaction Search</h3>
+            <p>Search addresses and transactions with physics metrics. View E=hf energy costs, wavelength proofs, and quantum security.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("🚀 Open Transaction Search", width="stretch", key="btn_tx_search"):
+            st.session_state.nav_request = "🔍 Transaction Search Explorer"
+            st.rerun()
+        
+        st.markdown("""
+        <div class="module-card">
             <h3>🚀 Napp Deployment Center</h3>
             <p>Deploy NexusOS Apps (Napps) with physics-based smart contracts. Generate, test, and deploy quantum-resistant applications.</p>
         </div>
