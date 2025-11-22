@@ -429,6 +429,118 @@ def render_profitability_calculator(economy: StakingEconomy):
         st.rerun()
 
 
+def render_register_validator(economy: StakingEconomy):
+    """Render validator registration interface"""
+    st.subheader("🚀 Become a Validator")
+    
+    st.markdown("""
+    Register your wallet as a validator to:
+    - 💰 Earn block rewards
+    - 📊 Participate in consensus
+    - 🌐 Help secure the network
+    - 🎯 Gain voting power
+    """)
+    
+    # Get wallet session
+    if 'active_address' not in st.session_state or not st.session_state.active_address:
+        st.warning("⚠️ Please unlock your wallet first in the **Web3 Wallet** tab")
+        return
+    
+    wallet_address = st.session_state.active_address
+    
+    # Check if already a validator
+    if wallet_address in economy.validators:
+        st.success(f"✅ Your wallet is already registered as a validator!")
+        validator = economy.validators[wallet_address]
+        
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Your Stake", f"{validator.stake:,.2f} NXT")
+        with col2:
+            st.metric("Commission", f"{validator.commission_rate * 100:.1f}%")
+        with col3:
+            st.metric("Reputation", f"{validator.reputation_score:.1f}")
+        return
+    
+    # Get wallet balance
+    if 'nexus_wallet' in st.session_state:
+        try:
+            balance_info = st.session_state.nexus_wallet.get_balance(wallet_address)
+            available_balance = balance_info['balance_nxt']
+        except:
+            available_balance = 0.0
+    else:
+        available_balance = 0.0
+    
+    st.info(f"**Wallet:** `{wallet_address[:20]}...`")
+    st.metric("Available Balance", f"{available_balance:.2f} NXT")
+    
+    st.markdown("---")
+    
+    with st.form("register_validator_form"):
+        st.subheader("Validator Configuration")
+        
+        stake_amount = st.number_input(
+            "Initial Stake (NXT)",
+            min_value=50.0,
+            max_value=float(available_balance),
+            value=min(100.0, available_balance),
+            step=10.0,
+            help="Minimum 50 NXT required to become a validator"
+        )
+        
+        commission_rate = st.slider(
+            "Commission Rate (%)",
+            min_value=0.0,
+            max_value=20.0,
+            value=10.0,
+            step=0.5,
+            help="Percentage of delegator rewards you'll keep as commission"
+        )
+        
+        st.markdown(f"""
+        **Summary:**
+        - You will stake **{stake_amount:.2f} NXT**
+        - Delegators will pay **{commission_rate:.1f}%** commission
+        - Remaining balance: **{available_balance - stake_amount:.2f} NXT**
+        """)
+        
+        submit = st.form_submit_button("🚀 Register as Validator", type="primary", width="stretch")
+        
+        if submit:
+            if stake_amount < 50:
+                st.error("❌ Minimum stake is 50 NXT")
+            elif stake_amount > available_balance:
+                st.error("❌ Insufficient balance")
+            else:
+                # Register validator
+                success = economy.register_validator(
+                    wallet_address,
+                    stake_amount,
+                    commission_rate / 100.0
+                )
+                
+                if success:
+                    st.success("✅ Validator registered successfully!")
+                    st.balloons()
+                    st.markdown(f"""
+                    **Congratulations!** 🎉
+                    
+                    Your wallet is now a validator:
+                    - Address: `{wallet_address}`
+                    - Stake: {stake_amount:.2f} NXT
+                    - Commission: {commission_rate:.1f}%
+                    
+                    You can now earn rewards from:
+                    - Block validation
+                    - Message validation
+                    - Delegator fees
+                    """)
+                    st.rerun()
+                else:
+                    st.error("❌ Registration failed - address already registered")
+
+
 def render_network_stats(economy: StakingEconomy):
     """Render overall network staking statistics"""
     st.subheader("🌐 Network Statistics")
@@ -458,8 +570,9 @@ def render_validator_economics_page():
     economy = initialize_staking_economy()
     
     # Navigation
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
         "🏛️ Validators",
+        "🚀 Become Validator",
         "💰 Delegate",
         "📊 My Delegations",
         "📈 Performance",
@@ -472,15 +585,18 @@ def render_validator_economics_page():
         render_validator_list(economy)
     
     with tab2:
-        render_delegate_interface(economy)
+        render_register_validator(economy)
     
     with tab3:
-        render_my_delegations(economy)
+        render_delegate_interface(economy)
     
     with tab4:
-        render_validator_performance(economy)
+        render_my_delegations(economy)
     
     with tab5:
+        render_validator_performance(economy)
+    
+    with tab6:
         render_profitability_calculator(economy)
     
     # Nexus AI Research Report for Researchers
