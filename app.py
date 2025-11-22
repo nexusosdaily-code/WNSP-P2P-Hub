@@ -125,12 +125,29 @@ def main():
             background: rgba(30, 90, 142, 0.3) !important;
         }
         
-        /* Sidebar text - BRIGHT */
+        /* Sidebar text - EXTRA BRIGHT with shadow for visibility */
         [data-testid="stSidebar"] p, 
         [data-testid="stSidebar"] span,
         [data-testid="stSidebar"] label,
         [data-testid="stSidebar"] div {
             color: #ffffff !important;
+            text-shadow: 0 0 3px rgba(0, 0, 0, 0.8), 0 0 5px rgba(136, 170, 255, 0.3) !important;
+            font-weight: 500 !important;
+        }
+        
+        /* Sidebar dropdown/selectbox - make text VERY visible */
+        [data-testid="stSidebar"] .stSelectbox label,
+        [data-testid="stSidebar"] .stSelectbox div[data-baseweb="select"] {
+            color: #ffffff !important;
+            font-weight: 600 !important;
+            font-size: 16px !important;
+        }
+        
+        /* Sidebar selectbox options */
+        [data-testid="stSidebar"] option {
+            color: #ffffff !important;
+            background: #1e3a5f !important;
+            font-weight: 500 !important;
         }
         
         /* Code blocks */
@@ -150,21 +167,26 @@ def main():
             color: #aaccff !important;
         }
         
-        /* Sidebar quantum styling - BRIGHTER */
+        /* Sidebar quantum styling - MUCH LIGHTER background */
         [data-testid="stSidebar"] {
-            background: linear-gradient(180deg, rgba(45, 45, 74, 0.95), rgba(30, 90, 142, 0.95));
-            border-right: 3px solid rgba(102, 126, 234, 0.6);
-            box-shadow: 5px 0 40px rgba(102, 126, 234, 0.5);
+            background: linear-gradient(180deg, rgba(70, 90, 120, 0.95), rgba(50, 110, 160, 0.95)) !important;
+            border-right: 3px solid rgba(136, 170, 255, 0.8);
+            box-shadow: 5px 0 40px rgba(136, 170, 255, 0.7);
         }
         
         [data-testid="stSidebar"] h1 {
-            background: linear-gradient(135deg, #88aaff 0%, #aa88ff 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            animation: shimmer 3s infinite linear;
-            background-size: 2000px 100%;
-            filter: brightness(1.3);
+            color: #ffffff !important;
+            text-shadow: 0 0 10px rgba(136, 170, 255, 0.8), 0 0 20px rgba(170, 136, 255, 0.5) !important;
+            font-size: 32px !important;
+            font-weight: 700 !important;
+        }
+        
+        /* Make "Civilization Operating System" text bright */
+        [data-testid="stSidebar"] .stMarkdown p {
+            color: #ffffff !important;
+            font-weight: 600 !important;
+            font-size: 15px !important;
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.8) !important;
         }
         
         /* Enhanced buttons with BRIGHT glow effect */
