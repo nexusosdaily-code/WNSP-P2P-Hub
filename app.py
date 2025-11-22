@@ -190,11 +190,20 @@ def main():
             color: #aaccff !important;
         }
         
-        /* Sidebar quantum styling - LIGHT background for dark text */
+        /* Sidebar with WAVE SPECTRUM colors - electromagnetic spectrum gradient */
         [data-testid="stSidebar"] {
-            background: linear-gradient(180deg, rgba(200, 220, 240, 0.98), rgba(180, 210, 235, 0.98)) !important;
-            border-right: 3px solid rgba(136, 170, 255, 0.8);
-            box-shadow: 5px 0 40px rgba(136, 170, 255, 0.7);
+            background: linear-gradient(180deg, 
+                rgba(255, 200, 200, 0.85),  /* Red (long wavelength) */
+                rgba(255, 220, 180, 0.85),  /* Orange */
+                rgba(255, 255, 200, 0.85),  /* Yellow */
+                rgba(200, 255, 200, 0.85),  /* Green */
+                rgba(200, 240, 255, 0.85),  /* Cyan */
+                rgba(200, 200, 255, 0.85),  /* Blue */
+                rgba(230, 200, 255, 0.85)   /* Violet (short wavelength) */
+            ) !important;
+            border-right: 4px solid rgba(136, 170, 255, 0.9);
+            box-shadow: 5px 0 50px rgba(136, 170, 255, 0.8), 
+                        inset -2px 0 20px rgba(255, 255, 255, 0.3);
         }
         
         [data-testid="stSidebar"] h1 {
