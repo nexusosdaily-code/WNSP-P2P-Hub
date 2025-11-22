@@ -21,6 +21,8 @@ import plotly.graph_objects as go
 import networkx as nx
 from datetime import datetime
 from typing import List, Optional
+import uuid
+import hashlib
 
 from wavelength_messaging_integration import (
     WavelengthMessagingSystem,
@@ -28,6 +30,7 @@ from wavelength_messaging_integration import (
 )
 from wavelength_validator import SpectralRegion, ModulationType
 from native_token import NativeTokenSystem
+from nexus_native_wallet import NexusNativeWallet
 
 
 def render_mobile_dag_messaging():
@@ -44,35 +47,90 @@ def render_mobile_dag_messaging():
     messaging_system = st.session_state.messaging_system
     token_system = st.session_state.token_system
     
+    # Initialize wallet
+    if 'nexus_wallet' not in st.session_state:
+        st.session_state.nexus_wallet = NexusNativeWallet()
+    wallet = st.session_state.nexus_wallet
+    
     # Header
     st.title("📱 NexusOS Mobile Messaging")
     st.markdown("**Secure messaging powered by electromagnetic physics**")
+    
+    # Check if real wallet is connected
+    is_wallet_connected = st.session_state.get('unlocked_wallet_address') is not None
+    unlocked_address = st.session_state.get('unlocked_wallet_address', '')
     
     # User account selector
     col1, col2 = st.columns([2, 1])
     
     with col1:
-        # Initialize messaging_current_user with defensive default (separate from auth current_user)
-        current_user_default = st.session_state.get('messaging_current_user', 'alice')
-        if current_user_default not in ["alice", "bob", "charlie"]:
-            current_user_default = "alice"
-        
-        current_user = st.selectbox(
-            "Your Account",
-            options=["alice", "bob", "charlie"],
-            index=["alice", "bob", "charlie"].index(current_user_default),
-            key="messaging_user_selector"  # Use unique key to avoid conflict
-        )
-        # Use separate session variable to avoid conflict with auth system
-        st.session_state.messaging_current_user = current_user
+        if is_wallet_connected and unlocked_address:
+            # Show connected wallet with option to use demo accounts
+            account_options = [f"🔓 Connected: {unlocked_address[:8]}...{unlocked_address[-6:]}", "alice", "bob", "charlie"]
+            current_user_default = st.session_state.get('messaging_current_user', account_options[0])
+            
+            if current_user_default not in account_options:
+                current_user_default = account_options[0]
+            
+            selected_account = st.selectbox(
+                "Your Account",
+                options=account_options,
+                index=account_options.index(current_user_default),
+                key="messaging_user_selector",
+                help="Use your connected wallet or switch to demo accounts"
+            )
+            
+            # Extract actual address/username
+            if selected_account.startswith("🔓"):
+                current_user = unlocked_address
+                st.session_state.messaging_current_user = current_user
+            else:
+                current_user = selected_account
+                st.session_state.messaging_current_user = current_user
+        else:
+            # No wallet connected - use demo accounts only
+            st.info("💡 Unlock your wallet in the Web3 Wallet tab to send messages from your real address!")
+            current_user_default = st.session_state.get('messaging_current_user', 'alice')
+            if current_user_default not in ["alice", "bob", "charlie"]:
+                current_user_default = "alice"
+            
+            current_user = st.selectbox(
+                "Demo Account",
+                options=["alice", "bob", "charlie"],
+                index=["alice", "bob", "charlie"].index(current_user_default),
+                key="messaging_user_selector"
+            )
+            st.session_state.messaging_current_user = current_user
     
     with col2:
-        user_account = token_system.get_account(current_user)
-        if user_account:
-            balance_nxt = user_account.get_balance_nxt()
-            st.metric("Balance", f"{balance_nxt:.2f} NXT")
+        # Get balance - check if using real wallet or demo account
+        if current_user not in ["alice", "bob", "charlie"]:
+            # Real wallet address - get balance from NexusNativeWallet
+            try:
+                balance_data = wallet.get_balance(current_user)
+                balance_nxt = balance_data['balance_nxt']
+                st.metric("Balance", f"{balance_nxt:.2f} NXT", help="Real wallet balance")
+                
+                # Sync balance to token_system for messaging cost estimation
+                # NativeTokenSystem uses units (1 NXT = 100 units)
+                if token_system.get_account(current_user) is None:
+                    token_system.create_account(current_user, initial_balance=int(balance_nxt * 100))  # Convert NXT to units
+                else:
+                    # Update existing account balance to match real wallet
+                    account = token_system.get_account(current_user)
+                    if account:
+                        account.balance = int(balance_nxt * 100)
+            except Exception as e:
+                st.metric("Balance", "0.00 NXT")
+                st.caption(f"⚠️ {str(e)}")
         else:
-            st.metric("Balance", "0.00 NXT")
+            # Demo account - get from token_system
+            user_account = token_system.get_account(current_user)
+            if user_account:
+                balance_nxt = user_account.get_balance_nxt()
+                st.metric("Balance", f"{balance_nxt:.2f} NXT", help="Demo account balance")
+            else:
+                st.metric("Balance", "0.00 NXT")
     
     st.divider()
     
@@ -120,6 +178,10 @@ def _initialize_demo_accounts(token_system: NativeTokenSystem, messaging_system:
 def render_send_message(messaging_system: WavelengthMessagingSystem, token_system: NativeTokenSystem, sender: str):
     st.header("📤 Send New Message")
     
+    # Initialize variables
+    total_cost_nxt = 0.0
+    can_send = False
+    
     st.markdown("""
     Send a secure message using wavelength-based validation. Cost is calculated from
     quantum physics (E = hf) - higher frequency = higher energy = higher cost.
@@ -129,8 +191,23 @@ def render_send_message(messaging_system: WavelengthMessagingSystem, token_syste
     col1, col2 = st.columns(2)
     
     with col1:
-        recipients = [u for u in ["alice", "bob", "charlie"] if u != sender]
-        recipient = st.selectbox("Recipient", options=recipients)
+        # Check if sender is a real wallet address or demo account
+        if sender not in ["alice", "bob", "charlie"]:
+            # Real wallet - allow custom recipient address
+            recipient_mode = st.radio("Send to:", ["Demo Account", "Custom Address"], horizontal=True)
+            
+            if recipient_mode == "Demo Account":
+                recipients = ["alice", "bob", "charlie"]
+                recipient = st.selectbox("Recipient", options=recipients)
+            else:
+                recipient_input = st.text_input("Recipient Address", placeholder="0x... or any address")
+                recipient = recipient_input if recipient_input else ""
+                if not recipient:
+                    st.warning("⚠️ Please enter a recipient address")
+        else:
+            # Demo account - only send to other demo accounts
+            recipients = [u for u in ["alice", "bob", "charlie"] if u != sender]
+            recipient = st.selectbox("Recipient", options=recipients)
     
     with col2:
         region = st.selectbox(
@@ -147,6 +224,17 @@ def render_send_message(messaging_system: WavelengthMessagingSystem, token_syste
         height=150,
         max_chars=1000
     )
+    
+    # Password input for real wallet users
+    wallet_password = None
+    if sender not in ["alice", "bob", "charlie"]:
+        st.markdown("**🔐 Wallet Password Required**")
+        st.caption("Messages from your real wallet require password authorization to deduct NXT")
+        wallet_password = st.text_input(
+            "Wallet Password",
+            type="password",
+            help="Required to authorize NXT payment for this message"
+        )
     
     # Parent message selection (for DAG chains)
     st.markdown("**📎 Chain to Previous Messages (Optional)**")
@@ -191,54 +279,59 @@ def render_send_message(messaging_system: WavelengthMessagingSystem, token_syste
     )
     
     # Cost estimation
-    if message_text:
-        st.divider()
-        st.subheader("💰 Cost Estimation")
-        
-        try:
-            # Calculate estimated cost using simplified E=hf approach
-            PLANCK = 6.626e-34  # Planck's constant (J·s)
-            SPEED_OF_LIGHT = 3e8  # Speed of light (m/s)
-            
-            # Calculate frequency from wavelength
-            frequency = SPEED_OF_LIGHT / region.center_wavelength  # Hz
-            
-            # Quantum energy cost (E = hf)
-            quantum_energy = PLANCK * frequency  # Joules
-            
-            # Scale to NXT with appropriate factor
-            BASE_SCALE = 1e21  # Scale joules to reasonable NXT amounts
-            message_bytes = len(message_text.encode('utf-8'))
-            
-            quantum_base_nxt = (quantum_energy * BASE_SCALE * message_bytes) / 1e6
-            total_cost_nxt = max(0.01, quantum_base_nxt)  # Minimum 0.01 NXT
-            
-            col1, col2, col3 = st.columns(3)
-            
-            with col1:
-                st.metric("Quantum Base", f"{quantum_base_nxt:.4f} NXT")
-            
-            with col2:
-                frequency_thz = frequency / 1e12
-                st.metric("Frequency", f"{frequency_thz:.0f} THz")
-            
-            with col3:
-                st.metric("**TOTAL COST**", f"{total_cost_nxt:.4f} NXT")
-            
-            # Check balance
-            sender_account = token_system.get_account(sender)
-            sender_balance_nxt = sender_account.get_balance_nxt() if sender_account else 0
-            
-            if sender_balance_nxt < total_cost_nxt:
-                st.error(f"⚠️ Insufficient balance! You have {sender_balance_nxt:.2f} NXT but need {total_cost_nxt:.4f} NXT")
-                can_send = False
-            else:
-                st.success(f"✅ Sufficient balance. You'll have {sender_balance_nxt - total_cost_nxt:.2f} NXT remaining")
-                can_send = True
-                
-        except Exception as e:
-            st.error(f"❌ Error calculating cost: {str(e)}")
+    if message_text and recipient:
+        # Real wallet users must provide password
+        if sender not in ["alice", "bob", "charlie"] and not wallet_password:
+            st.warning("⚠️ Please enter your wallet password to send this message")
             can_send = False
+        else:
+            st.divider()
+            st.subheader("💰 Cost Estimation")
+            
+            try:
+                # Calculate estimated cost using simplified E=hf approach
+                PLANCK = 6.626e-34  # Planck's constant (J·s)
+                SPEED_OF_LIGHT = 3e8  # Speed of light (m/s)
+                
+                # Calculate frequency from wavelength
+                frequency = SPEED_OF_LIGHT / region.center_wavelength  # Hz
+                
+                # Quantum energy cost (E = hf)
+                quantum_energy = PLANCK * frequency  # Joules
+                
+                # Scale to NXT with appropriate factor
+                BASE_SCALE = 1e21  # Scale joules to reasonable NXT amounts
+                message_bytes = len(message_text.encode('utf-8'))
+                
+                quantum_base_nxt = (quantum_energy * BASE_SCALE * message_bytes) / 1e6
+                total_cost_nxt = max(0.01, quantum_base_nxt)  # Minimum 0.01 NXT
+                
+                col1, col2, col3 = st.columns(3)
+                
+                with col1:
+                    st.metric("Quantum Base", f"{quantum_base_nxt:.4f} NXT")
+                
+                with col2:
+                    frequency_thz = frequency / 1e12
+                    st.metric("Frequency", f"{frequency_thz:.0f} THz")
+                
+                with col3:
+                    st.metric("**TOTAL COST**", f"{total_cost_nxt:.4f} NXT")
+                
+                # Check balance
+                sender_account = token_system.get_account(sender)
+                sender_balance_nxt = sender_account.get_balance_nxt() if sender_account else 0
+                
+                if sender_balance_nxt < total_cost_nxt:
+                    st.error(f"⚠️ Insufficient balance! You have {sender_balance_nxt:.2f} NXT but need {total_cost_nxt:.4f} NXT")
+                    can_send = False
+                else:
+                    st.success(f"✅ Sufficient balance. You'll have {sender_balance_nxt - total_cost_nxt:.2f} NXT remaining")
+                    can_send = True
+                    
+            except Exception as e:
+                st.error(f"❌ Error calculating cost: {str(e)}")
+                can_send = False
     else:
         can_send = False
     
@@ -246,22 +339,90 @@ def render_send_message(messaging_system: WavelengthMessagingSystem, token_syste
     st.divider()
     
     if st.button("📤 Send Message", type="primary", disabled=not can_send, width="stretch"):
-        with st.spinner("🌊 Generating wave signature and validating..."):
-            success, msg_obj, status = messaging_system.send_message(
-                sender_account=sender,
-                recipient_account=recipient,
-                content=message_text,
-                spectral_region=region,
-                modulation_type=modulation,
-                parent_message_ids=parent_ids if len(parent_ids) > 0 else None
-            )
+        with st.spinner("🌊 Validating accounts and processing payment..."):
+            payment_success = True
+            payment_error = None
             
-            if success:
-                st.success(status)
-                st.balloons()
-                st.rerun()
-            else:
-                st.error(f"❌ Failed to send: {status}")
+            # PRE-FLIGHT: Validate everything BEFORE taking payment
+            if sender not in ["alice", "bob", "charlie"]:
+                try:
+                    # Get wallet instance
+                    if 'nexus_wallet' not in st.session_state:
+                        raise ValueError("Wallet not initialized")
+                    
+                    wallet = st.session_state.nexus_wallet
+                    
+                    # Ensure VALIDATOR_POOL account exists in wallet
+                    try:
+                        wallet.get_balance("VALIDATOR_POOL")
+                    except:
+                        # Create VALIDATOR_POOL account if it doesn't exist
+                        try:
+                            wallet.create_account("VALIDATOR_POOL", "validator_pool_password")
+                            st.info("Created VALIDATOR_POOL account for messaging fees")
+                        except Exception as e:
+                            raise ValueError(f"Cannot create VALIDATOR_POOL account: {str(e)}")
+                    
+                    # CRITICAL: Ensure recipient has account in token_system BEFORE payment
+                    # This prevents payment without message delivery
+                    if token_system.get_account(recipient) is None:
+                        # Create recipient account in token_system
+                        token_system.create_account(recipient, initial_balance=0)
+                        st.info(f"Created messaging account for recipient {recipient[:10] if len(recipient) > 10 else recipient}")
+                    
+                    # Validate recipient account exists (if not demo)
+                    if recipient not in ["alice", "bob", "charlie"]:
+                        try:
+                            wallet.get_balance(recipient)
+                        except:
+                            st.warning(f"⚠️ Recipient {recipient[:10]}... not found in wallet. They must create an account to see this message.")
+                    
+                    # Generate deterministic idempotency key from message content
+                    # This ensures retries use the same key and don't double-charge
+                    idem_data = f"{sender}|{recipient}|{hashlib.sha256(message_text.encode()).hexdigest()}|{region.name}|{modulation.name}"
+                    idempotency_key = hashlib.sha256(idem_data.encode()).hexdigest()[:32]
+                    
+                    # CRITICAL: Pay BEFORE sending message (prevents free messages)
+                    payment_result = wallet.send_nxt(
+                        from_address=sender,
+                        to_address="VALIDATOR_POOL",
+                        amount=total_cost_nxt,
+                        password=wallet_password,
+                        idempotency_key=idempotency_key
+                    )
+                    
+                    payment_success = True
+                    st.success(f"✅ Payment confirmed: {total_cost_nxt:.4f} NXT sent to VALIDATOR_POOL")
+                    
+                except Exception as e:
+                    payment_success = False
+                    payment_error = str(e)
+                    st.error(f"❌ Payment failed: {payment_error}")
+                    st.error("Message NOT sent. Please fix payment issues and try again.")
+            
+            # STEP 2: Only send message if payment succeeded (or if demo account)
+            if payment_success:
+                success, msg_obj, status = messaging_system.send_message(
+                    sender_account=sender,
+                    recipient_account=recipient,
+                    content=message_text,
+                    spectral_region=region,
+                    modulation_type=modulation,
+                    parent_message_ids=parent_ids if len(parent_ids) > 0 else None
+                )
+                
+                if success:
+                    if sender not in ["alice", "bob", "charlie"]:
+                        st.success(f"📨 {status}")
+                    else:
+                        st.success(status)
+                    
+                    st.balloons()
+                    st.rerun()
+                else:
+                    st.error(f"❌ Message validation failed: {status}")
+                    if sender not in ["alice", "bob", "charlie"]:
+                        st.warning(f"⚠️ Payment was already processed ({total_cost_nxt:.4f} NXT). Please contact support for refund.")
 
 
 def render_inbox(messaging_system: WavelengthMessagingSystem, current_user: str):
