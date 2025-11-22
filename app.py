@@ -102,32 +102,41 @@ def main():
             100% { background-position: 1000px 0; }
         }
         
-        /* Main app background - STATIC (no animation) */
+        /* Main app background - LIGHT SPECTRUM GRADIENT */
         .stApp {
-            background: linear-gradient(-45deg, #1e3a5f, #2a5f8e, #3a7fbf, #1e5a8e);
-            color: #ffffff !important;
+            background: linear-gradient(135deg, 
+                rgba(255, 235, 235, 0.95),  /* Soft red */
+                rgba(255, 245, 220, 0.95),  /* Soft orange */
+                rgba(255, 255, 235, 0.95),  /* Soft yellow */
+                rgba(235, 255, 235, 0.95),  /* Soft green */
+                rgba(235, 250, 255, 0.95),  /* Soft cyan */
+                rgba(240, 240, 255, 0.95),  /* Soft blue */
+                rgba(250, 240, 255, 0.95)   /* Soft violet */
+            ) !important;
+            color: #1B1B2F !important;
         }
         
-        /* Global typography - BRIGHTER for better visibility (exclude dropdown items) */
-        .stApp main p, 
-        .stApp main span:not([data-baseweb="option"] *),
-        .stApp main div:not([data-baseweb="option"] *),
-        .stApp main label,
-        .stApp main td, 
-        .stApp main th {
-            color: #ffffff !important;
-            text-shadow: 0 0 1px rgba(0, 0, 0, 0.3);
+        /* Global typography - DARK text on light background */
+        body, p, span, div, label, li, td, th {
+            color: #1B1B2F !important;
+            font-weight: 500;
         }
         
-        /* Ensure all text elements are bright white */
+        /* Ensure all text elements are dark */
         .stMarkdown, .stText {
-            color: #ffffff !important;
+            color: #1B1B2F !important;
         }
         
-        /* Table text - BRIGHT */
+        /* Table text - DARK on light background */
         .dataframe, .dataframe td, .dataframe th {
-            color: #ffffff !important;
-            background: rgba(30, 90, 142, 0.3) !important;
+            color: #1B1B2F !important;
+            background: rgba(255, 255, 255, 0.85) !important;
+            border: 1px solid rgba(136, 170, 255, 0.3) !important;
+        }
+        
+        .dataframe th {
+            background: rgba(200, 220, 255, 0.6) !important;
+            font-weight: 700 !important;
         }
         
         /* Sidebar text - BLACK text for visibility on light background */
@@ -202,21 +211,23 @@ def main():
             background: #d0e0f0 !important;
         }
         
-        /* Code blocks */
+        /* Code blocks - light background */
         code {
-            background: rgba(15, 52, 96, 0.6) !important;
-            color: #a8d8ff !important;
+            background: rgba(240, 245, 255, 0.9) !important;
+            color: #2a3f5f !important;
             padding: 2px 6px;
             border-radius: 4px;
+            border: 1px solid rgba(136, 170, 255, 0.3);
         }
         
-        /* Link colors */
+        /* Link colors - readable on light background */
         a {
-            color: #88aaff !important;
+            color: #4a6fdd !important;
+            font-weight: 600;
         }
         
         a:hover {
-            color: #aaccff !important;
+            color: #667eea !important;
         }
         
         /* Sidebar with WAVE SPECTRUM colors - electromagnetic spectrum gradient */
@@ -256,16 +267,16 @@ def main():
             font-weight: 600 !important;
         }
         
-        /* Enhanced buttons with BRIGHT glow effect */
+        /* Enhanced buttons with spectrum gradient */
         .stButton > button {
-            background: linear-gradient(135deg, #88aaff 0%, #aa88ff 100%) !important;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
             color: white !important;
             border: none !important;
             border-radius: 12px !important;
             padding: 12px 24px !important;
-            font-weight: 600 !important;
+            font-weight: 700 !important;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-            box-shadow: 0 4px 20px rgba(136, 170, 255, 0.7) !important;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4) !important;
             position: relative;
             overflow: hidden;
         }
@@ -310,14 +321,14 @@ def main():
             box-shadow: 0 0 20px rgba(102, 126, 234, 0.3) !important;
         }
         
-        /* BRIGHTER glowing metric cards */
+        /* Light metric cards with spectrum border */
         [data-testid="metric-container"] {
-            background: linear-gradient(135deg, rgba(136, 170, 255, 0.25), rgba(170, 136, 255, 0.25));
-            border: 2px solid rgba(136, 170, 255, 0.6);
+            background: rgba(255, 255, 255, 0.9) !important;
+            border: 2px solid rgba(136, 170, 255, 0.5);
             border-radius: 12px;
             padding: 16px;
-            animation: pulseGlow 3s ease-in-out infinite;
-            transition: transform 0.3s ease;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
         
         [data-testid="metric-container"]:hover {
@@ -325,42 +336,45 @@ def main():
             border-color: rgba(102, 126, 234, 0.6);
         }
         
-        /* Enhanced tabs with quantum glow */
+        /* Enhanced tabs with light spectrum styling */
         .stTabs [data-baseweb="tab-list"] {
             gap: 8px;
-            background: rgba(15, 52, 96, 0.3);
+            background: rgba(255, 255, 255, 0.6);
             border-radius: 12px;
             padding: 8px;
+            border: 1px solid rgba(136, 170, 255, 0.3);
         }
         
         .stTabs [data-baseweb="tab"] {
             background: transparent;
             border-radius: 8px;
-            color: rgba(255, 255, 255, 0.7);
+            color: #4a6f8f !important;
             transition: all 0.3s ease;
             border: 1px solid transparent;
+            font-weight: 600;
         }
         
         .stTabs [data-baseweb="tab"]:hover {
-            background: rgba(102, 126, 234, 0.2);
-            color: white;
+            background: rgba(200, 220, 255, 0.5);
+            color: #2a3f5f !important;
             border-color: rgba(102, 126, 234, 0.4);
         }
         
         .stTabs [data-baseweb="tab"][aria-selected="true"] {
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.4), rgba(118, 75, 162, 0.4));
-            color: white;
-            box-shadow: 0 0 20px rgba(102, 126, 234, 0.4);
-            border-color: rgba(102, 126, 234, 0.6);
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+            color: #1B1B2F !important;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+            border: 2px solid rgba(102, 126, 234, 0.4);
         }
         
-        /* Text input quantum styling */
+        /* Text input - light styling */
         .stTextInput > div > div > input {
-            background: rgba(15, 52, 96, 0.5) !important;
+            background: rgba(255, 255, 255, 0.9) !important;
             border: 2px solid rgba(102, 126, 234, 0.3) !important;
+            color: #1B1B2F !important;
             border-radius: 10px !important;
-            color: white !important;
             transition: all 0.3s ease !important;
+            font-weight: 500;
         }
         
         .stTextInput > div > div > input:focus {
@@ -389,15 +403,21 @@ def main():
             box-shadow: 0 4px 20px rgba(102, 126, 234, 0.2);
         }
         
-        /* Headers with BRIGHT shimmer effect */
-        h1, h2, h3 {
-            background: linear-gradient(135deg, #aaccff 0%, #ccaaff 50%, #aaccff 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            background-size: 200% auto;
-            animation: shimmer 4s linear infinite;
-            filter: brightness(1.4);
+        /* Headers with spectrum accent colors - READABLE */
+        h1 {
+            color: #2a3f5f !important;
+            text-shadow: 2px 2px 4px rgba(136, 170, 255, 0.3);
+            font-weight: 700 !important;
+        }
+        
+        h2 {
+            color: #3a5f7f !important;
+            font-weight: 600 !important;
+        }
+        
+        h3 {
+            color: #4a6f8f !important;
+            font-weight: 600 !important;
         }
         
         /* Divider with quantum glow */
@@ -409,12 +429,12 @@ def main():
             box-shadow: 0 0 10px rgba(102, 126, 234, 0.4);
         }
         
-        /* Success/Info boxes with animation */
+        /* Success/Info boxes - light styling */
         .stAlert {
             border-radius: 12px;
             border-left: 4px solid rgba(102, 126, 234, 0.8);
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
-            animation: pulseGlow 4s ease-in-out infinite;
+            background: rgba(240, 250, 255, 0.9) !important;
+            color: #1B1B2F !important;
         }
         
         /* Quantum particles decoration (subtle) */
