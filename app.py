@@ -159,6 +159,25 @@ def main():
             font-size: 15px !important;
         }
         
+        /* Streamlit dropdown menu items - CRITICAL for visibility */
+        [data-testid="stSidebar"] ul[role="listbox"] li {
+            color: #000000 !important;
+            background: rgba(245, 250, 255, 0.98) !important;
+            font-weight: 600 !important;
+            font-size: 15px !important;
+        }
+        
+        /* Dropdown menu item hover */
+        [data-testid="stSidebar"] ul[role="listbox"] li:hover {
+            color: #000000 !important;
+            background: rgba(200, 230, 255, 0.98) !important;
+        }
+        
+        /* Dropdown menu container */
+        [data-testid="stSidebar"] [data-baseweb="popover"] {
+            background: rgba(245, 250, 255, 0.98) !important;
+        }
+        
         /* Sidebar selectbox options in dropdown - DARK text on light background */
         [data-testid="stSidebar"] option {
             color: #000000 !important;
