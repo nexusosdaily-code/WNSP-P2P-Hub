@@ -138,7 +138,9 @@ class NexusNativeWallet:
             self.db.execute(sa.text("SELECT 1"))
             self.db.commit()
             
-            print(f"✅ Database connected: {db_url.split('@')[0].split('//')[1] if '@' in db_url else 'SQLite'}")
+            # Log connection success WITHOUT exposing credentials
+            db_type = "PostgreSQL" if db_url.startswith('postgresql') else "SQLite"
+            print(f"✅ Database connected: {db_type}")
             
         except Exception as e:
             # If PostgreSQL fails, fall back to SQLite

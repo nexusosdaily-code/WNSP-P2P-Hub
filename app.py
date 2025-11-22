@@ -65,6 +65,12 @@ def main():
     )
     
     
+    # Handle navigation requests from other modules (before widget instantiation)
+    if "nav_request" in st.session_state and st.session_state.nav_request:
+        # Set the module_selector value BEFORE the widget is created
+        st.session_state.module_selector = st.session_state.nav_request
+        st.session_state.nav_request = None  # Clear the request
+    
     # Sidebar - Module Selector
     with st.sidebar:
         st.title("🌍 NexusOS")

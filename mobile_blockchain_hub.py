@@ -242,7 +242,7 @@ def render_blockchain_tab():
         </div>
         """, unsafe_allow_html=True)
         if st.button("🚀 Open Mobile DAG Messaging", width="stretch", key="btn_dag"):
-            st.session_state.module_selector = "💬 Mobile DAG Messaging"
+            st.session_state.nav_request = "💬 Mobile DAG Messaging"
             st.rerun()
         
         st.markdown("""
@@ -252,7 +252,7 @@ def render_blockchain_tab():
         </div>
         """, unsafe_allow_html=True)
         if st.button("🚀 Open Blockchain Explorer", width="stretch", key="btn_explorer"):
-            st.session_state.module_selector = "🔗 Blockchain Explorer"
+            st.session_state.nav_request = "🔗 Blockchain Explorer"
             st.rerun()
     
     with col2:
@@ -263,7 +263,7 @@ def render_blockchain_tab():
         </div>
         """, unsafe_allow_html=True)
         if st.button("🚀 Open Proof of Spectrum", width="stretch", key="btn_pos"):
-            st.session_state.module_selector = "🌈 Proof of Spectrum"
+            st.session_state.nav_request = "🌈 Proof of Spectrum"
             st.rerun()
         
         st.markdown("""
@@ -273,7 +273,7 @@ def render_blockchain_tab():
         </div>
         """, unsafe_allow_html=True)
         if st.button("🚀 Open GhostDAG System", width="stretch", key="btn_ghostdag"):
-            st.session_state.module_selector = "⚡ GhostDAG System"
+            st.session_state.nav_request = "⚡ GhostDAG System"
             st.rerun()
 
 
@@ -297,7 +297,7 @@ def render_trading_tab():
     """, unsafe_allow_html=True)
     
     if st.button("🚀 Open DEX Trading Platform", width="stretch", key="btn_dex", type="primary"):
-        st.session_state.module_selector = "💱 DEX (Token Exchange)"
+        st.session_state.nav_request = "💱 DEX (Token Exchange)"
         st.rerun()
     
     st.divider()
@@ -335,7 +335,7 @@ def render_staking_tab():
         </div>
         """, unsafe_allow_html=True)
         if st.button("🚀 Open Validator Economics", width="stretch", key="btn_validator"):
-            st.session_state.module_selector = "🏛️ Validator Economics"
+            st.session_state.nav_request = "🏛️ Validator Economics"
             st.rerun()
     
     with col2:
@@ -352,7 +352,7 @@ def render_staking_tab():
         </div>
         """, unsafe_allow_html=True)
         if st.button("🚀 Open Wavelength Economics", width="stretch", key="btn_wavelength"):
-            st.session_state.module_selector = "💵 Wavelength Economics"
+            st.session_state.nav_request = "💵 Wavelength Economics"
             st.rerun()
     
     st.divider()
