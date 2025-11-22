@@ -73,17 +73,11 @@ def render_address_search(wallet_system: NexusNativeWallet):
     st.header("🔍 Address Search")
     
     # Search input
-    col1, col2 = st.columns([3, 1])
-    
-    with col1:
-        search_address = st.text_input(
-            "Enter NexusOS Address",
-            placeholder="NXS20F5AFFDDCD21ED2B88CF4ED9F3CEDBD0A1DF3D2",
-            help="Enter a NexusOS address starting with 'NXS'"
-        )
-    
-    with col2:
-        search_button = st.button("🔍 Search", type="primary", use_container_width=True)
+    search_address = st.text_input(
+        "Enter NexusOS Address",
+        placeholder="NXS20F5AFFDDCD21ED2B88CF4ED9F3CEDBD0A1DF3D2",
+        help="Enter a NexusOS address starting with 'NXS' - search happens automatically as you type"
+    )
     
     # Quick example addresses
     with st.expander("📋 Example Addresses"):
@@ -93,8 +87,8 @@ def render_address_search(wallet_system: NexusNativeWallet):
         - `NXS3165B843F1C3D87FD872B71D7B6D92E8456EAF5B` (Genesis sender)
         """)
     
-    # Perform search
-    if search_button and search_address:
+    # Perform search automatically when address is entered
+    if search_address:
         if not search_address.startswith("NXS"):
             st.error("❌ Invalid address format. NexusOS addresses start with 'NXS'")
             return
