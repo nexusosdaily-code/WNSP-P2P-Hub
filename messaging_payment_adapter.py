@@ -98,15 +98,15 @@ class WalletPaymentAdapter(PaymentAdapter):
         self.token_system = token_system
         self.password = password
         
-        # Load VALIDATOR_POOL password from parameter or environment
+        # Load VALIDATOR_POOL password from parameter or environment (REQUIRED for production)
         self.validator_pool_password = validator_pool_password or os.getenv('VALIDATOR_POOL_PASSWORD')
         
         if not self.validator_pool_password:
-            # For MVP/testing, generate a default password with warning
-            print("⚠️ WARNING: VALIDATOR_POOL_PASSWORD not set in environment")
-            print("⚠️ Using default password 'nexus_validator_pool_2024' - NOT PRODUCTION SAFE")
-            print("⚠️ Set VALIDATOR_POOL_PASSWORD environment variable for production")
-            self.validator_pool_password = "nexus_validator_pool_2024"
+            raise ValueError(
+                "VALIDATOR_POOL_PASSWORD must be set for atomic messaging safety. "
+                "Set via environment variable or constructor parameter. "
+                "This credential is required to execute compensating refunds during rollback."
+            )
         
         self.last_payment_tx = None
         self.last_token_tx = None  # Track token_system transaction for rollback
@@ -284,10 +284,8 @@ class WalletPaymentAdapter(PaymentAdapter):
             if failed_reversals:
                 print(f"CRITICAL: Cannot refund sender - {len(failed_reversals)} reward reversals failed")
                 print(f"  Failed validators: {failed_reversals}")
-                # Clear state before returning
-                self.last_reward_txs = []
-                self.last_payment_tx = None
-                self.last_token_tx = None
+                print(f"  PRESERVING STATE: Transaction state preserved for manual recovery")
+                # DO NOT CLEAR STATE - preserve for manual recovery
                 return False
             
             # STEP 2: Reverse sender→VALIDATOR_POOL token_system transfer
@@ -301,6 +299,8 @@ class WalletPaymentAdapter(PaymentAdapter):
             
             if not reversed_tx:
                 print(f"ERROR: Token system rollback failed for {sender}")
+                print(f"  PRESERVING STATE: Transaction state preserved for manual recovery")
+                # DO NOT CLEAR STATE - preserve for manual recovery
                 return False
             
             # STEP 3: Send compensating wallet refund (IRREVERSIBLE blockchain transaction)
@@ -334,17 +334,16 @@ class WalletPaymentAdapter(PaymentAdapter):
                 print(f"  Error: {str(wallet_error)}")
                 print(f"  Possible reason: VALIDATOR_POOL password mismatch or insufficient balance")
                 print(f"  Manual wallet refund required")
-                
-                # Clear state after partial rollback
-                self.last_reward_txs = []
-                self.last_payment_tx = None
-                self.last_token_tx = None
+                print(f"  PRESERVING STATE: Transaction state preserved for manual recovery")
+                # DO NOT CLEAR STATE - preserve for manual recovery/retry
                 
                 return False
             
         except Exception as e:
-            # General rollback failed
+            # General rollback failed - preserve state for recovery
             print(f"Rollback failed: {str(e)}")
+            print(f"  PRESERVING STATE: Transaction state preserved for manual recovery")
+            # DO NOT CLEAR STATE - preserve for manual recovery
             return False
 
 
