@@ -683,13 +683,13 @@ def main():
     # Initialize
     initialize_civilization()
     
-    # Tabs
+    # Tabs - equal width for alignment
     tabs = st.tabs([
         "⚛️ Wave Computation",
-        "🏠 BHLS Floor",
+        "🏠 BHLS Floor System",
         "♻️ Circular Economy",
-        "🌍 Civilization Simulator",
-        "🗳️ Governance",
+        "🌍 Civilization Sim",
+        "🗳️ Governance System",
         "⚡ Supply Chain",
         "📱 Mobile Wallet"
     ])
