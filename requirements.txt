@@ -7,9 +7,7 @@ streamlit-autorefresh>=1.0.1
 # Web & API
 flask>=3.0.0
 flask-cors>=4.0.0
-flask-socketio>=5.3.5
 python-socketio>=5.10.0
-socketio>=0.2.1
 requests>=2.31.0
 
 # Blockchain & Cryptography
@@ -51,3 +49,5 @@ rich>=13.7.0
 pytest>=7.4.3
 scikit-learn
 scipy
+flask-socketio
+werkzeug
