@@ -16,6 +16,12 @@ from dataclasses import dataclass
 from collections import defaultdict
 import math
 
+# Active intervention integration
+try:
+    from active_intervention_engine import get_intervention_engine
+except ImportError:
+    get_intervention_engine = None
+
 
 @dataclass
 class Proposal:
@@ -171,6 +177,27 @@ class QuadraticVotingSystem:
             
             if voting_power > max_allowed_power:
                 voting_power = max_allowed_power
+        
+        # 🛡️ ACTIVE INTERVENTION: Detect vote concentration spikes
+        if get_intervention_engine:
+            # Check recent vote concentration (last 60 seconds)
+            recent_votes = [v for v in self.votes[proposal_id] if time.time() - v.timestamp < 60]
+            if recent_votes:
+                recent_power = sum(v.voting_power_quadratic for v in recent_votes)
+                total_power = proposal.votes_for + proposal.votes_against + voting_power
+                
+                if total_power > 0:
+                    vote_concentration = recent_power / total_power
+                    
+                    # Check if concentration threshold reached (>40% = HIGH threat)
+                    if vote_concentration > 0.20:  # Monitor at >20%
+                        intervention_engine = get_intervention_engine()
+                        intervention_engine.detect_and_intervene(
+                            threat_type="sudden_vote_concentration",
+                            entity=f"proposal_{proposal_id}",
+                            metric_value=vote_concentration,
+                            evidence=f"{len(recent_votes)} votes in 60s ({vote_concentration*100:.1f}% of total power)"
+                        )
         
         # Record vote
         vote = Vote(

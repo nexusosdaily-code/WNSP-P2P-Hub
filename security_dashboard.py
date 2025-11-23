@@ -27,6 +27,15 @@ from ai_security import (
     get_anomaly_detector, get_liquidity_protection
 )
 
+# Active intervention engine
+try:
+    from active_intervention_engine import get_intervention_engine, ThreatLevel
+    from network_intervention import get_network_guard
+except ImportError:
+    get_intervention_engine = None
+    get_network_guard = None
+    ThreatLevel = None
+
 
 def security_dashboard():
     """Main security dashboard interface"""
@@ -71,6 +80,7 @@ def security_dashboard():
     
     # Tab-based navigation
     tabs = st.tabs([
+        "🛡️ Active Interventions",
         "🚦 Rate Limiting",
         "💱 DEX Security",
         "📊 Oracle Health",
@@ -80,33 +90,212 @@ def security_dashboard():
         "📈 Security Analytics"
     ])
     
-    # Tab 1: Rate Limiting
+    # Tab 1: Active Interventions (NEW!)
     with tabs[0]:
+        active_interventions_tab()
+    
+    # Tab 2: Rate Limiting
+    with tabs[1]:
         rate_limiting_tab()
     
-    # Tab 2: DEX Security
-    with tabs[1]:
+    # Tab 3: DEX Security
+    with tabs[2]:
         dex_security_tab()
     
-    # Tab 3: Oracle Health
-    with tabs[2]:
+    # Tab 4: Oracle Health
+    with tabs[3]:
         oracle_health_tab()
     
-    # Tab 4: Governance Security
-    with tabs[3]:
+    # Tab 5: Governance Security
+    with tabs[4]:
         governance_security_tab()
     
-    # Tab 5: AI Security
-    with tabs[4]:
+    # Tab 6: AI Security
+    with tabs[5]:
         ai_security_tab()
     
-    # Tab 6: Liquidity Protection
-    with tabs[5]:
+    # Tab 7: Liquidity Protection
+    with tabs[6]:
         liquidity_protection_tab()
     
-    # Tab 7: Security Analytics
-    with tabs[6]:
+    # Tab 8: Security Analytics
+    with tabs[7]:
         security_analytics_tab()
+
+
+def active_interventions_tab():
+    """Active intervention monitoring - real-time threat response"""
+    st.subheader("🛡️ Active Intervention Engine")
+    st.markdown("**Real-time automated threat detection & response**")
+    st.markdown("*Philosophy: Intervention is better than a cure*")
+    
+    if get_intervention_engine is None:
+        st.warning("Intervention engine not available")
+        return
+    
+    intervention_engine = get_intervention_engine()
+    stats = intervention_engine.get_intervention_stats()
+    
+    # Status overview
+    col1, col2, col3, col4, col5 = st.columns(5)
+    
+    with col1:
+        st.metric(
+            "Total Interventions",
+            stats["total_interventions"],
+            delta=f"+{stats['interventions_24h']} (24h)",
+            help="Automatic threat responses executed"
+        )
+    
+    with col2:
+        st.metric(
+            "Threats Blocked",
+            stats["threats_blocked"],
+            help="Attacks prevented before damage"
+        )
+    
+    with col3:
+        st.metric(
+            "Active Threats",
+            stats["active_threats"],
+            delta="Real-time",
+            help="Currently detected threats"
+        )
+    
+    with col4:
+        emergency_status = "🚨 ACTIVE" if stats["emergency_shutdown"] else "✅ NORMAL"
+        st.metric(
+            "System Status",
+            emergency_status,
+            help="Emergency shutdown status"
+        )
+    
+    with col5:
+        gov_status = "⏸️ PAUSED" if stats["governance_paused"] else "✅ ACTIVE"
+        st.metric(
+            "Governance",
+            gov_status,
+            help="Governance system status"
+        )
+    
+    st.markdown("---")
+    
+    # Ban lists section
+    st.markdown("### 🚫 Active Bans & Blacklists")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("**Permanent Bans**")
+        st.metric("Count", stats["permanent_bans"])
+        
+        if intervention_engine.permanent_bans:
+            for entity in list(intervention_engine.permanent_bans)[:10]:
+                st.text(f"🔴 {entity}")
+        else:
+            st.caption("No permanent bans")
+    
+    with col2:
+        st.markdown("**Temporary Bans**")
+        st.metric("Count", stats["temporary_bans"])
+        
+        if intervention_engine.temporary_bans:
+            current_time = time.time()
+            for entity, unban_time in list(intervention_engine.temporary_bans.items())[:10]:
+                remaining = int(unban_time - current_time)
+                if remaining > 0:
+                    st.text(f"🟡 {entity[:20]}... ({remaining}s left)")
+        else:
+            st.caption("No temporary bans")
+    
+    col3, col4 = st.columns(2)
+    
+    with col3:
+        st.markdown("**Oracle Blacklist**")
+        st.metric("Count", stats["oracle_blacklist"])
+        
+        if intervention_engine.oracle_blacklist:
+            for oracle in list(intervention_engine.oracle_blacklist)[:10]:
+                st.text(f"📊 {oracle}")
+        else:
+            st.caption("No blacklisted oracles")
+    
+    with col4:
+        st.markdown("**Isolated Validators**")
+        st.metric("Count", stats["isolated_validators"])
+        
+        if intervention_engine.isolated_validators:
+            for validator in list(intervention_engine.isolated_validators)[:10]:
+                st.text(f"⚠️ {validator}")
+        else:
+            st.caption("No isolated validators")
+    
+    st.markdown("---")
+    
+    # Active threats table
+    st.markdown("### 🎯 Active Threats (Real-Time)")
+    
+    active_threats = intervention_engine.get_active_threats()
+    
+    if active_threats:
+        threats_data = []
+        for threat in active_threats[:20]:  # Show latest 20
+            threat_time = datetime.fromtimestamp(threat.detected_at)
+            threats_data.append({
+                "Time": threat_time.strftime("%H:%M:%S"),
+                "Threat Type": threat.threat_type,
+                "Level": threat.threat_level.value.upper(),
+                "Entity": threat.entity[:30] + "..." if len(threat.entity) > 30 else threat.entity,
+                "Evidence": threat.evidence[:60] + "..." if len(threat.evidence) > 60 else threat.evidence,
+                "Intervened": "✅" if threat.intervened else "🟡",
+                "Action": threat.intervention_action.value if threat.intervention_action else "Monitoring"
+            })
+        
+        threats_df = pd.DataFrame(threats_data)
+        st.dataframe(threats_df, use_container_width=True, hide_index=True)
+    else:
+        st.success("✅ No active threats detected - system is secure")
+    
+    st.markdown("---")
+    
+    # Manual intervention controls
+    st.markdown("### 🎛️ Manual Intervention Controls")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("**Emergency Controls**")
+        
+        if stats["governance_paused"]:
+            if st.button("✅ Resume Governance", type="primary"):
+                intervention_engine.resume_governance("admin_dashboard")
+                st.success("Governance resumed!")
+                st.rerun()
+        
+        if stats["emergency_shutdown"]:
+            auth_code = st.text_input("Authorization Code", type="password")
+            if st.button("🔓 Override Emergency Shutdown", type="primary"):
+                if intervention_engine.emergency_shutdown_override("admin_dashboard", auth_code):
+                    st.success("Emergency shutdown deactivated!")
+                    st.rerun()
+                else:
+                    st.error("Invalid authorization code")
+    
+    with col2:
+        st.markdown("**Unban Entity**")
+        
+        entity_to_unban = st.text_input("Entity to unban")
+        unban_reason = st.text_input("Reason")
+        
+        if st.button("🔓 Unban"):
+            if entity_to_unban and unban_reason:
+                if intervention_engine.unban_entity(entity_to_unban, unban_reason):
+                    st.success(f"Unbanned: {entity_to_unban}")
+                    st.rerun()
+                else:
+                    st.warning("Entity not found in ban lists")
+            else:
+                st.error("Enter entity and reason")
 
 
 def rate_limiting_tab():

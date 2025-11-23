@@ -18,6 +18,12 @@ from enum import Enum
 from collections import deque, defaultdict
 import threading
 
+# Active intervention integration
+try:
+    from active_intervention_engine import get_intervention_engine
+except ImportError:
+    get_intervention_engine = None
+
 
 class AttackType(Enum):
     """Types of attacks being monitored"""
@@ -418,7 +424,7 @@ class MultiOracleSystem:
                 if t > timestamp - 300  # Last 5 minutes
             ]
             
-            # Outlier detection
+            # Outlier detection with ACTIVE INTERVENTION
             if len(recent_prices) >= 3:
                 import numpy as np
                 
@@ -429,6 +435,18 @@ class MultiOracleSystem:
                     z_score = abs((price - mean_price) / std_price)
                     
                     if z_score > self.outlier_threshold:
+                        # 🛡️ ACTIVE INTERVENTION: Auto-blacklist manipulated oracle
+                        deviation = abs((price - mean_price) / mean_price)
+                        
+                        if get_intervention_engine:
+                            intervention_engine = get_intervention_engine()
+                            intervention_engine.detect_and_intervene(
+                                threat_type="oracle_price_deviation",
+                                entity=oracle_id,
+                                metric_value=deviation,
+                                evidence=f"Price ${price:.2f} deviates {deviation*100:.1f}% from mean ${mean_price:.2f} (z-score: {z_score:.2f})"
+                            )
+                        
                         # Reject outlier
                         return False
             
