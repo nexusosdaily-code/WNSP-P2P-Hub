@@ -35,6 +35,11 @@ try:
 except ImportError:
     AIMessageSecurityController = None
 
+try:
+    from ai_arbitration_controller import get_arbitration_controller
+except ImportError:
+    get_arbitration_controller = None
+
 
 def render_ai_system_status():
     """Render status of all AI systems with runtime verification"""
@@ -84,6 +89,15 @@ def render_ai_system_status():
     except Exception as e:
         consensus_ai_status = f'⚠️ Import Error'
     
+    # Check AI Arbitration Controller (instance available)
+    arbitration_status = '⚠️ Module Not Found'
+    if get_arbitration_controller:
+        try:
+            arbitration_controller = get_arbitration_controller()
+            arbitration_status = '✅ Instance Active'
+        except Exception:
+            arbitration_status = '⚠️ Error'
+    
     ai_systems = [
         {
             'System': '🎯 AI Message Router',
@@ -119,6 +133,13 @@ def render_ai_system_status():
             'Status': consensus_ai_status,
             'Control': 'Autonomous',
             'Priority': 'Critical'
+        },
+        {
+            'System': '⚖️ AI Arbitration Controller',
+            'Function': 'Dispute resolution & moderation',
+            'Status': arbitration_status,
+            'Control': 'On-Demand',
+            'Priority': 'High'
         }
     ]
     

@@ -54,6 +54,7 @@ from avogadro_economics_dashboard import main as avogadro_economics_main
 from napp_deployment_center import render_napp_deployment_center
 from transaction_search_explorer import render_transaction_search_explorer
 from sybil_dashboard import render_sybil_detection_dashboard
+from ai_arbitration_dashboard import render_arbitration_dashboard
 
 
 def main():
@@ -527,6 +528,7 @@ def main():
                 "🌐 Offline Mesh Network",
                 "🏛️ Civic Governance",
                 "🛡️ Sybil Detection System",
+                "⚖️ AI Arbitration & Moderation",
                 "🌊 WaveLang Studio",
                 "🤖 WaveLang AI Teacher",
                 "💻 WaveLang Binary Compiler",
@@ -673,6 +675,11 @@ def main():
                 "icon": "🛡️",
                 "desc": "Multi-dimensional cluster analysis to detect coordinated validator attacks using 7 detection vectors",
                 "features": ["Temporal Clustering", "Behavioral Analysis", "Economic Tracing", "Network Topology", "Spectral Coordination", "Device Fingerprinting", "Auto-Penalty System"]
+            },
+            "⚖️ AI Arbitration & Moderation": {
+                "icon": "⚖️",
+                "desc": "AI-powered dispute resolution and conflict mediation system with evidence-based decision making",
+                "features": ["Penalty Appeals", "Governance Mediation", "Validator Conflicts", "Evidence Analysis", "Confidence Scoring", "Transparent Reasoning"]
             }
         }
         
@@ -864,6 +871,10 @@ def main():
     elif module == "🛡️ Sybil Detection System":
         # Multi-dimensional Sybil attack detection
         render_sybil_detection_dashboard()
+    
+    elif module == "⚖️ AI Arbitration & Moderation":
+        # AI-powered dispute resolution and moderation
+        render_arbitration_dashboard()
 
 
 if __name__ == "__main__":
