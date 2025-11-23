@@ -12,6 +12,7 @@ from wnsp_unified_mesh_stack import (
     WavelengthAddress, PrivateMessage, KnowledgeResource,
     TransportProtocol, NodeType
 )
+from wnsp_media_propagation import WNSPMediaPropagation, MediaFile
 import hashlib
 
 def render_wnsp_unified_mesh_dashboard():
@@ -28,15 +29,20 @@ def render_wnsp_unified_mesh_dashboard():
     if 'unified_mesh_stack' not in st.session_state:
         st.session_state.unified_mesh_stack = create_demo_network()
     
+    if 'media_propagation' not in st.session_state:
+        st.session_state.media_propagation = WNSPMediaPropagation()
+    
     stack = st.session_state.unified_mesh_stack
+    media_engine = st.session_state.media_propagation
     
     # Tabs for each layer + overview
-    tab_overview, tab_layer1, tab_layer2, tab_layer3, tab_layer4, tab_demo = st.tabs([
+    tab_overview, tab_layer1, tab_layer2, tab_layer3, tab_layer4, tab_media, tab_demo = st.tabs([
         "📊 Stack Overview",
         "📡 Layer 1: Mesh ISP",
         "🛡️ Layer 2: Routing",
         "🔐 Layer 3: Messaging", 
         "📚 Layer 4: Knowledge",
+        "🎬 Media Propagation",
         "🎮 Live Demo"
     ])
     
@@ -54,6 +60,9 @@ def render_wnsp_unified_mesh_dashboard():
         
     with tab_layer4:
         render_layer4_knowledge(stack)
+        
+    with tab_media:
+        render_media_propagation(media_engine)
         
     with tab_demo:
         render_live_demo(stack)
@@ -577,3 +586,264 @@ def render_live_demo(stack: WNSPUnifiedMeshStack):
             with st.expander(f"{'✅' if layer_data['status'] == 'OPERATIONAL' else '❌'} {layer_name.replace('_', ' ').title()}"):
                 for key, value in layer_data.items():
                     st.write(f"**{key}:** {value}")
+
+def render_media_propagation(media_engine: WNSPMediaPropagation):
+    st.header("🎬 Media Propagation - Beyond Text Messaging")
+    
+    st.info("**Note:** This is a conceptual demonstration showing WNSP's potential for media distribution. Production implementation would integrate with actual mesh topology.")
+    
+    st.markdown("""
+    **WNSP isn't just text messaging** - it's a complete content distribution network!
+    
+    Propagate **any media** across the mesh:
+    - 🎵 **Audio**: MP3, OGG, WAV (podcasts, voice messages, music)
+    - 🎥 **Video**: MP4, WebM (lectures, tutorials, news broadcasts)
+    - 📄 **Documents**: PDF, DOCX, EPUB (textbooks, legal docs, guides)
+    - 🖼️ **Images**: JPEG, PNG, SVG (maps, photos, diagrams)
+    - 📦 **Software**: APK, ZIP (app distribution, updates)
+    """)
+    
+    st.divider()
+    
+    # Content library summary
+    st.subheader("📚 Content Library by Community")
+    
+    library_summary = media_engine.get_content_library_summary()
+    
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.metric("🎓 University", library_summary['university'], "files")
+        st.caption("Lectures, textbooks, research")
+    
+    with col2:
+        st.metric("🏕️ Refugee", library_summary['refugee'], "files")
+        st.caption("Legal, language, safety")
+    
+    with col3:
+        st.metric("🌾 Rural", library_summary['rural'], "files")
+        st.caption("Agriculture, health, markets")
+    
+    with col4:
+        st.metric("🚨 Crisis", library_summary['crisis'], "files")
+        st.caption("Emergency, rescue, survival")
+    
+    st.divider()
+    
+    # Category selector
+    st.subheader("🗂️ Browse Content by Community Type")
+    
+    category = st.selectbox(
+        "Select community:",
+        ["university", "refugee", "rural", "crisis"],
+        format_func=lambda x: {
+            "university": "🎓 University Campus",
+            "refugee": "🏕️ Refugee Populations",
+            "rural": "🌾 Rural Communities",
+            "crisis": "🚨 Crisis Response"
+        }[x]
+    )
+    
+    files = media_engine.get_files_by_category(category)
+    
+    if files:
+        st.success(f"Found **{len(files)} media files** for {category} communities")
+        
+        for media_file in files:
+            with st.expander(f"{'🎥' if media_file.file_type == 'mp4' else '🎵' if media_file.file_type == 'mp3' else '📄'} {media_file.filename}"):
+                file_info = media_engine.get_file_info(media_file.file_id)
+                
+                if not file_info:
+                    st.error("Unable to load file information")
+                    continue
+                
+                col1, col2, col3 = st.columns(3)
+                
+                with col1:
+                    st.metric("File Size", f"{file_info['file_size_mb']} MB")
+                    st.metric("File Type", media_file.file_type.upper())
+                
+                with col2:
+                    st.metric("Total Chunks", file_info['total_chunks'])
+                    st.metric("Chunk Size", f"{file_info['avg_chunk_size_kb']} KB")
+                
+                with col3:
+                    st.metric("Energy Cost", f"{file_info['total_energy_cost']} NXT")
+                    st.caption("E=hf physics pricing")
+                
+                st.markdown(f"**Description:** {media_file.description}")
+                
+                st.divider()
+                st.markdown("**⏱️ Estimated Download Time:**")
+                
+                time_col1, time_col2, time_col3 = st.columns(3)
+                
+                with time_col1:
+                    st.metric("BLE (1 Mbps)", f"{file_info['estimated_time']['ble_minutes']} min")
+                
+                with time_col2:
+                    st.metric("WiFi (50 Mbps)", f"{file_info['estimated_time']['wifi_minutes']} min")
+                
+                with time_col3:
+                    st.metric("LoRa (50 Kbps)", f"{file_info['estimated_time']['lora_minutes']} min")
+                
+                st.divider()
+                st.markdown("**🔬 Chunk Distribution (First 10 chunks):**")
+                
+                chunk_data = []
+                for chunk_info in file_info['chunks']:
+                    chunk_data.append({
+                        'Chunk': f"#{chunk_info['index']}",
+                        'Size (KB)': chunk_info['size_kb'],
+                        'Wavelength (nm)': chunk_info['wavelength'],
+                        'Energy (NXT)': chunk_info['energy_cost']
+                    })
+                
+                if chunk_data:
+                    st.dataframe(chunk_data, use_container_width=True)
+    
+    st.divider()
+    
+    # Propagation statistics
+    st.subheader("📊 Network Propagation Statistics")
+    
+    stats = media_engine.get_propagation_statistics()
+    
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.metric("Total Files", stats['total_files'])
+        st.metric("Total Chunks", stats['total_chunks'])
+    
+    with col2:
+        st.metric("Chunks Distributed", stats['total_chunks_distributed'])
+        st.metric("Avg Hops", stats['avg_hop_count'])
+    
+    with col3:
+        st.metric("Data Transmitted", f"{stats['total_mb_transmitted']} MB")
+        st.caption("Across mesh network")
+    
+    with col4:
+        st.metric("Energy Spent", f"{stats['total_energy_spent_nxt']} NXT")
+        st.metric("Dedup Savings", stats['deduplication_savings'])
+    
+    st.divider()
+    
+    # Cache statistics
+    st.markdown("**📦 Chunk Caching (Deduplication):**")
+    
+    cache_col1, cache_col2, cache_col3 = st.columns(3)
+    
+    with cache_col1:
+        st.metric("Cache Hits", stats['cache_hits'])
+    
+    with cache_col2:
+        st.metric("Cache Misses", stats['cache_misses'])
+    
+    with cache_col3:
+        total_cache_requests = stats['cache_hits'] + stats['cache_misses']
+        if total_cache_requests > 0:
+            hit_rate = (stats['cache_hits'] / total_cache_requests) * 100
+            st.metric("Hit Rate", f"{hit_rate:.1f}%")
+        else:
+            st.metric("Hit Rate", "N/A")
+    
+    st.divider()
+    
+    # Simulate download
+    st.subheader("🔄 Simulate Media Download")
+    
+    st.info("**Progressive Streaming** - Start playback before complete download!")
+    
+    if files:
+        selected_file = st.selectbox(
+            "Select file to download:",
+            files,
+            format_func=lambda f: f"{f.filename} ({f.file_size / 1048576:.1f} MB)"
+        )
+        
+        download_progress = st.slider(
+            "Simulated download progress:",
+            min_value=0,
+            max_value=100,
+            value=0,
+            step=5,
+            help="In real mesh network, this shows actual download progress"
+        )
+        
+        download_result = media_engine.simulate_download(selected_file.file_id, download_progress)
+        
+        if download_result:
+            st.progress(download_progress / 100)
+            
+            st.markdown(f"""
+            **Download Status:**
+            - Progress: **{download_result['progress']}%**
+            - Chunks Downloaded: **{download_result['chunks_downloaded']}/{download_result['total_chunks']}**
+            - Data Received: **{download_result['buffered_mb']:.2f} MB** / **{download_result['total_mb']:.2f} MB**
+            """)
+            
+            if download_result['can_stream'] and selected_file.file_type in ['mp3', 'mp4']:
+                if download_result['has_safe_buffer']:
+                    st.success("✅ **Streaming Ready!** - Safe buffer achieved (≥20%)")
+                else:
+                    st.info("⚠️ **Streaming Possible** - Minimum buffer reached (≥10%), but may stutter")
+            
+            if download_result['is_complete']:
+                st.balloons()
+                st.success("🎉 **Download Complete!** - File fully reconstructed from chunks")
+    
+    st.divider()
+    
+    # Technical details
+    with st.expander("🔬 Technical Concept & Future Production Implementation"):
+        st.warning("**Demonstration Status:** This module shows the concept. Production would require mesh topology integration, content-based deduplication, and real propagation tracking.")
+        
+        st.markdown("""
+        ### How Media Propagation Would Work:
+        
+        **1. File Chunking**
+        - Large files split into 64 KB chunks (optimal for BLE/WiFi)
+        - Each chunk assigned unique wavelength (350-1033 nm spectrum)
+        - Energy cost calculated using E=hf for each chunk
+        
+        **2. DAG Distribution**
+        - Chunks propagate through mesh via multiple paths
+        - No single point of failure
+        - Self-healing if nodes drop out
+        
+        **3. Progressive Streaming**
+        - Start playback at 10-20% download
+        - Buffer ahead while playing
+        - Smooth user experience even on slow networks
+        
+        **4. Content Deduplication**
+        - Popular files cached at multiple nodes
+        - Content-addressable storage (SHA-256 hashing)
+        - Saves bandwidth and energy costs
+        
+        **5. Energy Economics**
+        - Larger files = higher energy cost (E=hf)
+        - Prevents spam and network abuse
+        - Fair resource allocation
+        
+        ### Real-World Example:
+        
+        **100 MB educational video on university campus mesh:**
+        - Split into ~1,600 chunks (64 KB each)
+        - Cost: ~1 NXT to transmit across 5 hops
+        - Download time: ~3 minutes on WiFi, ~16 minutes on BLE
+        - Cached on 20+ student phones → no redundant downloads
+        - Available offline even when internet fails
+        
+        **This is the power of WNSP: Complete content distribution without internet infrastructure!**
+        
+        ### Production Implementation Requirements:
+        
+        1. **Mesh Topology Integration**: Propagation must consult actual WNSPUnifiedMeshStack node graph instead of simulated hop counts
+        2. **Content-Based Hashing**: Chunks should be keyed by actual data hash (not chunk_id) so identical content from different files can be deduplicated
+        3. **Real Propagation Tracking**: Progressive streaming should be driven by actual chunk propagation events, not input percentages
+        4. **Multi-Hop Energy Accounting**: Track per-hop costs and show both single-hop and total multi-hop energy expenditure
+        5. **Node-Specific Caches**: Maintain separate cache inventories per mesh node to accurately model deduplication across network
+        """)
+
