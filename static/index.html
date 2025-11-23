@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WNSP Media Hub - Decentralized Knowledge Network</title>
+    <link rel="stylesheet" href="css/media_player.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon">🌐</div>
+                    <h1>WNSP Media Hub</h1>
+                </div>
+                <div class="network-status">
+                    <span class="status-indicator online"></span>
+                    <span class="status-text">Mesh Network Active</span>
+                    <span class="node-count">10 nodes</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Category Navigation -->
+            <nav class="category-nav">
+                <button class="category-btn active" data-category="all">
+                    <span class="icon">📚</span>
+                    All Content
+                </button>
+                <button class="category-btn" data-category="university">
+                    <span class="icon">🎓</span>
+                    University
+                </button>
+                <button class="category-btn" data-category="refugee">
+                    <span class="icon">🏕️</span>
+                    Refugee Resources
+                </button>
+                <button class="category-btn" data-category="rural">
+                    <span class="icon">🌾</span>
+                    Rural Communities
+                </button>
+                <button class="category-btn" data-category="crisis">
+                    <span class="icon">🚨</span>
+                    Crisis Response
+                </button>
+            </nav>
+
+            <!-- Search Bar -->
+            <div class="search-container">
+                <input type="text" class="search-input" placeholder="Search for videos, audio, documents..." id="searchInput">
+                <span class="search-icon">🔍</span>
+            </div>
+
+            <!-- Media Grid -->
+            <div class="media-section">
+                <h2 class="section-title">Available Content</h2>
+                <div class="media-grid" id="mediaGrid">
+                    <!-- Media cards will be dynamically inserted here -->
+                </div>
+            </div>
+
+            <!-- Currently Playing Section -->
+            <div class="now-playing-section" id="nowPlayingSection" style="display: none;">
+                <h2 class="section-title">Now Playing</h2>
+                <div class="player-container">
+                    <!-- Video Player -->
+                    <div class="video-player-wrapper" id="videoPlayerWrapper" style="display: none;">
+                        <video id="videoPlayer" class="video-player" controls></video>
+                        <div class="video-info">
+                            <h3 class="video-title" id="videoTitle"></h3>
+                            <p class="video-meta" id="videoMeta"></p>
+                        </div>
+                    </div>
+
+                    <!-- Audio Player -->
+                    <div class="audio-player-wrapper" id="audioPlayerWrapper" style="display: none;">
+                        <div class="audio-player">
+                            <audio id="audioPlayer" class="audio-element"></audio>
+                            <div class="audio-cover">
+                                <div class="cover-art" id="coverArt">🎵</div>
+                            </div>
+                            <div class="audio-info">
+                                <h3 class="audio-title" id="audioTitle"></h3>
+                                <p class="audio-artist" id="audioArtist"></p>
+                            </div>
+                            <div class="audio-controls">
+                                <button class="control-btn" id="prevBtn">⏮</button>
+                                <button class="control-btn play-pause" id="playPauseBtn">▶️</button>
+                                <button class="control-btn" id="nextBtn">⏭</button>
+                                <button class="control-btn" id="shuffleBtn">🔀</button>
+                                <button class="control-btn" id="repeatBtn">🔁</button>
+                            </div>
+                            <div class="progress-container">
+                                <div class="time-display">
+                                    <span id="currentTime">0:00</span>
+                                    <span id="duration">0:00</span>
+                                </div>
+                                <div class="progress-bar" id="progressBar">
+                                    <div class="progress-fill" id="progressFill"></div>
+                                </div>
+                            </div>
+                            <div class="volume-container">
+                                <span class="volume-icon">🔊</span>
+                                <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="70">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Document Viewer -->
+                    <div class="document-viewer-wrapper" id="documentViewerWrapper" style="display: none;">
+                        <iframe id="documentViewer" class="document-viewer"></iframe>
+                        <div class="document-info">
+                            <h3 class="document-title" id="documentTitle"></h3>
+                            <p class="document-meta" id="documentMeta"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Network Stats -->
+            <div class="network-stats">
+                <div class="stat-card">
+                    <div class="stat-icon">📦</div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="cacheSize">0 MB</span>
+                        <span class="stat-label">Cached Locally</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⚡</div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="energySpent">0.000</span>
+                        <span class="stat-label">Energy (NXT)</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📡</div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="propagations">0</span>
+                        <span class="stat-label">Propagations</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🎯</div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="cacheHitRate">0%</span>
+                        <span class="stat-label">Cache Hit Rate</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>WNSP Media Hub - Decentralized Knowledge Network | GPL v3.0 License</p>
+            <p class="footer-tagline">Empowering communities through physics-based mesh networking</p>
+        </div>
+    </footer>
+
+    <script src="js/media_player_enhanced.js"></script>
+</body>
+</html>
