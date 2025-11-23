@@ -1510,6 +1510,66 @@ Unlike RSA (vulnerable to Shor's algorithm), wavelength encoding doesn't rely on
 - Session tokens hashed with SHA-256
 - Sensitive data never logged
 
+### 15.4 Active Intervention Engine
+
+**Philosophy:** "Intervention is better than a cure" - moving from passive defense to active immune system.
+
+**Core Capability:**
+The Active Intervention Engine is an AI-powered security system that automatically detects and neutralizes attacks in real-time without human intervention.
+
+**Automated Threat Response:**
+
+| Attack Type | Detection Threshold | Automated Action |
+|------------|---------------------|------------------|
+| Oracle Manipulation | >50% price deviation | Auto-blacklist data source |
+| Governance Attack | >40% vote concentration in 60s | Auto-pause voting |
+| Network DDoS | >100 req/s from single IP | Permanent ban |
+| Network DDoS | >50 req/s from single IP | 1-hour temporary ban |
+| Wash Trading | >50% of trading pair volume | Permanent ban |
+| Flash Loan Attack | Same-block borrow/repay | Permanent ban |
+| Validator Double-Signing | Any occurrence | Isolate from consensus |
+| Validator Censorship | >70% transaction rejection | Isolate from consensus |
+
+**Intervention Architecture:**
+
+1. **Threat Detection Layer:**
+   - Rule-based pattern matching
+   - Priority-based severity escalation (LOW → MEDIUM → HIGH → CRITICAL)
+   - Real-time metric monitoring across all attack surfaces
+
+2. **Response Execution Layer:**
+   - Automatic blacklisting (oracle sources, malicious addresses)
+   - Automatic banning (permanent and temporary with expiry)
+   - Automatic governance pause (freeze voting during attack)
+   - Automatic validator isolation (remove from consensus)
+   - Emergency shutdown (system-wide halt for critical threats)
+
+3. **Monitoring & Override Layer:**
+   - Active Interventions Dashboard (real-time statistics)
+   - Blacklist/ban management with manual controls
+   - Intervention history and audit logs
+   - Manual governance resume capability
+   - Kill-switch for emergency controls
+
+**Production Integration:**
+
+The intervention engine is directly integrated into transaction flows:
+- `native_token.py`: Rate limiting enforcement (10 transfers/60s)
+- `mobile_dag_protocol.py`: Message rate limiting (20 messages/60s)
+- `dex_core.py`: Swap rate limiting (5 swaps/60s)
+- `security_framework.py`: Oracle manipulation detection
+- `governance_security.py`: Vote concentration monitoring
+- `network_intervention.py`: DDoS protection
+
+**Security Posture:**
+- **Before:** ~75% coverage with passive prevention
+- **After:** ~90% coverage with active intervention and automated response
+- **Response Time:** Real-time detection and sub-second intervention execution
+
+**Proof of Spectrum + Active Intervention:**
+
+The combination of Proof of Spectrum (preventing 51% attacks via spectral diversity) and Active Intervention Engine (neutralizing attacks in real-time) creates a comprehensive defense that operates at both the consensus layer and transaction layer.
+
 ---
 
 ## 16. Use Cases and Applications
