@@ -53,6 +53,7 @@ from economic_loop_dashboard import render_economic_loop_dashboard
 from avogadro_economics_dashboard import main as avogadro_economics_main
 from napp_deployment_center import render_napp_deployment_center
 from transaction_search_explorer import render_transaction_search_explorer
+from sybil_dashboard import render_sybil_detection_dashboard
 
 
 def main():
@@ -525,6 +526,7 @@ def main():
                 "💬 Talk to Nexus AI",
                 "🌐 Offline Mesh Network",
                 "🏛️ Civic Governance",
+                "🛡️ Sybil Detection System",
                 "🌊 WaveLang Studio",
                 "🤖 WaveLang AI Teacher",
                 "💻 WaveLang Binary Compiler",
@@ -666,6 +668,11 @@ def main():
                 "icon": "🏛️",
                 "desc": "Innovation campaigns where validators burn NXT to promote ideas, community votes, AI analyzes results",
                 "features": ["Create Campaigns", "Community Voting", "AI Analysis Reports", "Campaign Analytics", "NXT Burn Economics"]
+            },
+            "🛡️ Sybil Detection System": {
+                "icon": "🛡️",
+                "desc": "Multi-dimensional cluster analysis to detect coordinated validator attacks using 7 detection vectors",
+                "features": ["Temporal Clustering", "Behavioral Analysis", "Economic Tracing", "Network Topology", "Spectral Coordination", "Device Fingerprinting", "Auto-Penalty System"]
             }
         }
         
@@ -732,6 +739,7 @@ def main():
                 "💬 Talk to Nexus AI",
                 "🌐 Offline Mesh Network",
                 "🏛️ Civic Governance",
+                "🛡️ Sybil Detection System",
                 "⚛️ Avogadro Economics",
                 "🌊 WaveLang Studio",
                 "🤖 WaveLang AI Teacher",
@@ -852,6 +860,10 @@ def main():
     elif module == "🏛️ Civic Governance":
         # Civic governance innovation campaigns
         civic_governance_main()
+    
+    elif module == "🛡️ Sybil Detection System":
+        # Multi-dimensional Sybil attack detection
+        render_sybil_detection_dashboard()
 
 
 if __name__ == "__main__":
