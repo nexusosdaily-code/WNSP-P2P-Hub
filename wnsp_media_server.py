@@ -7,6 +7,7 @@ Serves the user-facing media player interface and integrates with WNSP backend
 
 from flask import Flask, send_from_directory, jsonify, request, Response, send_file
 from flask_cors import CORS
+from flask_socketio import SocketIO, emit, join_room, leave_room
 from werkzeug.utils import secure_filename
 import os
 import sys
@@ -33,9 +34,14 @@ except ImportError:
 
 app = Flask(__name__, static_folder='static')
 CORS(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 # Security: Enforce maximum upload size (100MB)
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
+
+# LiveStream state management
+active_broadcasts = {}  # broadcaster_id -> {room_id, title, category, viewer_count}
+active_viewers = {}     # viewer_socket_id -> broadcaster_id
 
 # Error handler for file too large
 @app.errorhandler(413)
