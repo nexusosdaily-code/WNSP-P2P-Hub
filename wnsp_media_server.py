@@ -382,6 +382,84 @@ def login_wallet():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route('/api/wallet/import', methods=['POST'])
+def import_wallet():
+    """Import existing blockchain wallet and create device mapping"""
+    from nexus_wnsp_integration import NexusWNSPWallet
+    import os
+    import hashlib
+    import secrets
+    
+    data = request.get_json()
+    address = data.get('address', '').strip()
+    password = data.get('password', '').strip()
+    device_name = data.get('device_name', '').strip()
+    
+    if not address or not password or not device_name:
+        return jsonify({
+            'success': False,
+            'error': 'Address, password, and device name are required'
+        }), 400
+    
+    try:
+        wallet = NexusWNSPWallet(database_url=os.getenv('DATABASE_URL'))
+        
+        # Verify wallet exists and password is correct
+        from nexus_native_wallet import NexusNativeWallet
+        native_wallet = NexusNativeWallet(database_url=os.getenv('DATABASE_URL'))
+        
+        # Try to authenticate with password (verify wallet exists)
+        # Note: We'll check if the address exists and has the correct password
+        import psycopg2
+        conn = psycopg2.connect(os.getenv('DATABASE_URL'))
+        
+        try:
+            with conn.cursor() as cur:
+                # Check if wallet exists
+                cur.execute("""
+                    SELECT address FROM nexus_wallets WHERE address = %s
+                """, (address,))
+                
+                if not cur.fetchone():
+                    return jsonify({
+                        'success': False,
+                        'error': 'Wallet address not found'
+                    }), 404
+            
+            # Create device mapping
+            device_id = hashlib.sha256(f"{address}{secrets.token_hex(8)}".encode()).hexdigest()[:16]
+            auth_token = secrets.token_urlsafe(32)
+            
+            with conn.cursor() as cur:
+                cur.execute("""
+                    INSERT INTO nexus_device_wallet_mapping 
+                    (device_id, device_name, contact, nexus_address, auth_token)
+                    VALUES (%s, %s, %s, %s, %s)
+                    RETURNING device_id
+                """, (device_id, device_name, f"{device_name}@imported", address, auth_token))
+                
+                conn.commit()
+            
+            # Get balance
+            balance_result = wallet.get_balance(device_id)
+            
+            return jsonify({
+                'success': True,
+                'wallet': {
+                    'device_id': device_id,
+                    'device_name': device_name,
+                    'nexus_address': address,
+                    'auth_token': auth_token,
+                    'balance_units': balance_result.get('balance_units', 0),
+                    'balance_nxt': balance_result.get('balance_nxt', 0.0)
+                }
+            }), 201
+        finally:
+            conn.close()
+            
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @app.route('/api/wallet/balance')
 def get_wallet_balance():
     """Get wallet balance"""

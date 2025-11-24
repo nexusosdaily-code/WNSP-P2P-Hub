@@ -812,6 +812,46 @@ async function createWallet() {
     }
 }
 
+async function importWallet() {
+    const address = document.getElementById('importAddress').value.trim();
+    const password = document.getElementById('importPassword').value.trim();
+    const deviceName = document.getElementById('importDeviceName').value.trim();
+    
+    if (!address || !password || !deviceName) {
+        showWalletStatus('Please fill in all fields', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/wallet/import', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                address: address,
+                password: password,
+                device_name: deviceName
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            currentWallet = data.wallet;
+            localStorage.setItem('wallet', JSON.stringify(currentWallet));
+            updateWalletUI();
+            closeWalletModalFunc();
+            showWalletStatus(`✅ Wallet imported! Balance: ${data.wallet.balance_nxt} NXT`, 'success');
+        } else {
+            showWalletStatus(`❌ ${data.error}`, 'error');
+        }
+    } catch (error) {
+        showWalletStatus('❌ Failed to import wallet', 'error');
+        console.error('Error importing wallet:', error);
+    }
+}
+
 async function loginWallet() {
     const contact = loginDeviceId.value.trim();
     
@@ -1173,6 +1213,11 @@ function attachEventListeners() {
     walletTabBtns.forEach(btn => {
         btn.addEventListener('click', () => switchWalletTab(btn.dataset.tab));
     });
+    
+    const importWalletBtn = document.getElementById('importWalletBtn');
+    if (importWalletBtn) {
+        importWalletBtn.addEventListener('click', importWallet);
+    }
     
     if (loginWalletBtn) {
         loginWalletBtn.addEventListener('click', loginWallet);
