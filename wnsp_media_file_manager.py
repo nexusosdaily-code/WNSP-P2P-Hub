@@ -289,6 +289,24 @@ class WNSPMediaFileManager:
         
         return library
     
+    def get_file_info(self, file_id: str) -> Optional[Dict]:
+        """Get information about a specific file"""
+        media_file = self.media_library.get(file_id)
+        if media_file:
+            return media_file.to_dict()
+        return None
+    
+    def remove_file(self, file_id: str) -> bool:
+        """Remove a file from the media library registry"""
+        if file_id in self.media_library:
+            del self.media_library[file_id]
+            # Also clear any cached chunks for this file
+            chunks_to_remove = [cid for cid in self.chunk_cache if cid.startswith(file_id)]
+            for cid in chunks_to_remove:
+                del self.chunk_cache[cid]
+            return True
+        return False
+    
     def scan_media_directory(self):
         """Scan media directory for files and auto-ingest"""
         print("🔍 Scanning media directory...")

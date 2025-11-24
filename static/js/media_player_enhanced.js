@@ -113,6 +113,31 @@ function convertBackendDataToFrontend(backendData) {
     return converted.length > 0 ? converted : getFallbackMediaLibrary();
 }
 
+// Delete Media File
+async function deleteMedia(media) {
+    if (!confirm(`Are you sure you want to delete "${media.title}"?`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/media/delete/${media.id}`, {
+            method: 'DELETE'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert(`✅ Successfully deleted "${media.title}"`);
+            loadMediaLibrary(); // Refresh the library
+        } else {
+            alert(`❌ Failed to delete: ${data.error || 'Unknown error'}`);
+        }
+    } catch (error) {
+        console.error('Delete error:', error);
+        alert(`❌ Error deleting file: ${error.message}`);
+    }
+}
+
 // Get emoji for category
 function getCategoryEmoji(category) {
     const emojis = {
@@ -299,7 +324,6 @@ function renderMediaGrid(filter = currentCategory, searchTerm = '') {
 function createMediaCard(media) {
     const card = document.createElement('div');
     card.className = 'media-card';
-    card.onclick = () => playMedia(media);
     
     const typeEmoji = media.type === 'video' ? '▶️' : media.type === 'audio' ? '🎵' : '📄';
     const typeLabel = media.type.charAt(0).toUpperCase() + media.type.slice(1);
@@ -308,6 +332,7 @@ function createMediaCard(media) {
         <div class="media-thumbnail">
             ${media.thumbnail}
             <span class="media-type-badge">${typeEmoji} ${typeLabel}</span>
+            <button class="delete-btn" title="Delete this file">🗑️</button>
         </div>
         <div class="media-content">
             <h3 class="media-title">${media.title}</h3>
@@ -326,6 +351,20 @@ function createMediaCard(media) {
             </div>
         </div>
     `;
+    
+    // Add delete button handler
+    const deleteBtn = card.querySelector('.delete-btn');
+    deleteBtn.onclick = (e) => {
+        e.stopPropagation();
+        deleteMedia(media);
+    };
+    
+    // Add play handler to the card (not the delete button)
+    card.onclick = (e) => {
+        if (!e.target.classList.contains('delete-btn')) {
+            playMedia(media);
+        }
+    };
     
     return card;
 }

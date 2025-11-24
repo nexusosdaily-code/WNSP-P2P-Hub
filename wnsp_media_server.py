@@ -319,6 +319,50 @@ def upload_media():
     
     return jsonify(response), 200 if uploaded_files else 400
 
+@app.route('/api/media/delete/<file_id>', methods=['DELETE'])
+def delete_media(file_id):
+    """
+    Delete a media file from WNSP network
+    """
+    if not FILE_MANAGER_AVAILABLE:
+        return jsonify({'error': 'File manager not available'}), 503
+    
+    try:
+        # Find the file in the media manager
+        file_info = media_manager.get_file_info(file_id)
+        
+        if not file_info:
+            return jsonify({
+                'success': False,
+                'error': 'File not found'
+            }), 404
+        
+        # Get the file path
+        filepath = file_info.get('filepath')
+        
+        if not filepath or not os.path.exists(filepath):
+            return jsonify({
+                'success': False,
+                'error': 'File not found on disk'
+            }), 404
+        
+        # Delete the physical file
+        os.remove(filepath)
+        
+        # Remove from media manager's registry
+        media_manager.remove_file(file_id)
+        
+        return jsonify({
+            'success': True,
+            'message': f'Successfully deleted {file_id}'
+        })
+    
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 @app.route('/api/health')
 def health_check():
     """Health check endpoint"""
