@@ -129,16 +129,20 @@ def init_media_engine():
         print("🔄 Initializing WNSP Media Engine with YOUR devices...", flush=True)
         # Direct assignment to globals (no intermediate variables)
         mesh_stack = create_user_mesh_network()
+        print(f"📝 Mesh created: {mesh_stack is not None}", flush=True)
+        
         media_engine = WNSPMediaPropagationProduction(mesh_stack=mesh_stack)
+        print(f"📝 Engine created: {media_engine is not None}, type={type(media_engine)}", flush=True)
         
         print(f"✅ WNSP Media Engine initialized! engine={media_engine is not None}, mesh={mesh_stack is not None}, id={id(media_engine)}", flush=True)
     except Exception as e:
-        print(f"⚠️  WNSP Engine initialization failed: {e}", flush=True)
+        print(f"⚠️  WNSP Engine initialization EXCEPTION: {e}", flush=True)
         import traceback
         traceback.print_exc()
         WNSP_AVAILABLE = False
         media_engine = None
     finally:
+        print(f"🔍 Finally block: media_engine={media_engine is not None if 'media_engine' in dir() else 'NOT_DEFINED'}", flush=True)
         _wnsp_initializing = False
 
 # Removed @app.before_request hook - it causes infinite init loops and page hangs
