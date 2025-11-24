@@ -350,26 +350,39 @@ def upload_media():
             # Ingest file into WNSP network with category metadata
             media_id = media_manager.ingest_file(filepath, category=category)
             
-            # 🌐 AUTOMATIC MESH PROPAGATION: Distribute file to all network nodes
+            # 🌐 PEER-TO-PEER MESH PROPAGATION: Detect source device and propagate to peer
             propagation_results = []
             engine = get_media_engine()
             if engine and engine.mesh_stack:
-                # Get all mesh nodes
-                mesh_nodes = list(engine.mesh_stack.layer1_mesh_isp.nodes.keys())
-                print(f"📡 Auto-propagating {filename} to {len(mesh_nodes)} mesh nodes...")
+                # Detect which device is uploading
+                source_ip = request.remote_addr
+                is_local = source_ip == '127.0.0.1' or source_ip.startswith('127.')
                 
-                # Propagate to each node in the mesh
-                for node_id in mesh_nodes:
+                # Map IP to mesh node
+                source_node = "your_computer" if is_local else "your_phone"
+                source_display = "💻 Computer" if is_local else "📱 Phone"
+                
+                # Get all mesh nodes EXCEPT the source
+                all_nodes = list(engine.mesh_stack.layer1_mesh_isp.nodes.keys())
+                target_nodes = [n for n in all_nodes if n != source_node]
+                
+                print(f"📤 Upload from {source_display} ({source_ip})")
+                print(f"📡 Propagating {filename} to {len(target_nodes)} peer node(s)...")
+                
+                # Propagate to peer nodes only (not back to source)
+                for node_id in target_nodes:
                     try:
-                        result = engine.propagate_file_to_node(media_id, node_id, source_node_id="upload_server")
+                        result = engine.propagate_file_to_node(media_id, node_id, source_node_id=source_node)
                         if result.get('success'):
+                            target_display = "💻 Computer" if node_id == "your_computer" else "📱 Phone"
                             propagation_results.append({
                                 'node': node_id,
+                                'node_display': target_display,
                                 'chunks': result.get('successful_chunks', 0),
                                 'energy': result.get('total_energy', 0),
                                 'hops': result.get('total_hops', 0)
                             })
-                            print(f"✅ Propagated to {node_id}: {result.get('successful_chunks')} chunks, {result.get('total_hops')} hops")
+                            print(f"✅ {source_display} → {target_display}: {result.get('successful_chunks')} chunks, {result.get('total_hops')} hops, {result.get('total_energy'):.6f} NXT")
                     except Exception as prop_error:
                         print(f"⚠️  Propagation to {node_id} failed: {prop_error}")
             
