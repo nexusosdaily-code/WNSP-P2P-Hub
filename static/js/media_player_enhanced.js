@@ -1017,8 +1017,14 @@ function renderPeerList(peers) {
     }
     
     // Detect current device (filter out self - can't send to yourself!)
-    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    const currentDevice = isLocalhost ? 'your_computer' : 'your_phone';
+    // Check hostname OR if accessing from local network IP
+    const hostname = window.location.hostname;
+    const isComputer = hostname === 'localhost' || 
+                      hostname === '127.0.0.1' || 
+                      hostname.startsWith('192.168.') ||
+                      hostname.startsWith('10.') ||
+                      hostname.startsWith('172.');  // Local network IPs
+    const currentDevice = isComputer ? 'your_computer' : 'your_phone';
     
     // Filter out current device from friend selection
     const availablePeers = peers.filter(peer => peer.device_id !== currentDevice);
