@@ -904,6 +904,54 @@ function showWalletStatus(message, type) {
     walletStatus.className = `upload-status ${type}`;
 }
 
+// Load available wallets for import
+async function loadAvailableWallets() {
+    try {
+        const response = await fetch('/api/wallet/list');
+        const data = await response.json();
+        
+        const walletsListContent = document.getElementById('walletsListContent');
+        
+        if (data.success && data.wallets && data.wallets.length > 0) {
+            let html = '';
+            data.wallets.forEach(wallet => {
+                const balanceNXT = wallet.balance_nxt.toFixed(2);
+                const addressShort = wallet.address.substring(0, 12) + '...' + wallet.address.substring(wallet.address.length - 6);
+                html += `
+                    <div style="padding: 8px; margin-bottom: 6px; border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; transition: background 0.2s;" 
+                         onmouseover="this.style.background='var(--hover-bg)'" 
+                         onmouseout="this.style.background='transparent'"
+                         onclick="selectWallet('${wallet.address}')"
+                         title="Click to copy address: ${wallet.address}">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-family: monospace; color: var(--primary-color);">${addressShort}</span>
+                            <span style="color: var(--success); font-weight: 600;">${balanceNXT} NXT</span>
+                        </div>
+                    </div>
+                `;
+            });
+            walletsListContent.innerHTML = html;
+        } else {
+            walletsListContent.innerHTML = '<p style="color: var(--text-secondary); text-align: center;">No wallets found</p>';
+        }
+    } catch (error) {
+        console.error('Error loading wallets:', error);
+        document.getElementById('walletsListContent').innerHTML = '<p style="color: var(--error); text-align: center;">Failed to load wallets</p>';
+    }
+}
+
+// Select wallet for import
+function selectWallet(address) {
+    const importAddressInput = document.getElementById('importAddress');
+    importAddressInput.value = address;
+    
+    // Copy to clipboard
+    navigator.clipboard.writeText(address).then(() => {
+        showWalletStatus(`✅ Address copied: ${address.substring(0, 12)}...`, 'success');
+        setTimeout(() => showWalletStatus('', ''), 2000);
+    });
+}
+
 // Check for existing wallet on page load
 function initWallet() {
     const savedWallet = localStorage.getItem('wallet');
@@ -911,6 +959,9 @@ function initWallet() {
         currentWallet = JSON.parse(savedWallet);
         updateWalletUI();
     }
+    
+    // Load available wallets for import
+    loadAvailableWallets();
 }
 
 async function loadNearbyPeers() {

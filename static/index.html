@@ -57,9 +57,18 @@
                 <div class="wallet-tab-content" id="importTab">
                     <h3>🔗 Import Blockchain Wallet</h3>
                     <p style="color: var(--text-secondary); margin-bottom: 16px;">Connect your existing NexusOS blockchain wallet</p>
+                    
+                    <!-- My Wallets List -->
+                    <div id="walletsList" style="margin-bottom: 20px; max-height: 200px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; background: var(--bg-primary);">
+                        <h4 style="margin: 0 0 12px 0; font-size: 14px; color: var(--text-primary);">💼 My Wallets (Click to Copy)</h4>
+                        <div id="walletsListContent" style="font-size: 12px;">
+                            Loading...
+                        </div>
+                    </div>
+                    
                     <div class="form-group">
                         <label for="importAddress">Wallet Address:</label>
-                        <input type="text" id="importAddress" placeholder="NXS..." class="form-input">
+                        <input type="text" id="importAddress" placeholder="NXS... (or click a wallet above)" class="form-input">
                     </div>
                     <div class="form-group">
                         <label for="importPassword">Password:</label>

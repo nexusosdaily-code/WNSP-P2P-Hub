@@ -460,6 +460,43 @@ def import_wallet():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route('/api/wallet/list')
+def list_wallets():
+    """List all user wallets (excluding system accounts)"""
+    import psycopg2
+    
+    try:
+        conn = psycopg2.connect(os.getenv('DATABASE_URL'))
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT address, balance 
+                    FROM nexus_token_accounts 
+                    WHERE address NOT IN ('TREASURY', 'ECOSYSTEM_FUND', 'VALIDATOR_POOL', 'TRANSITION_RESERVE', 'BURN_ADDRESS')
+                    AND balance > 0
+                    ORDER BY balance DESC
+                """)
+                
+                rows = cur.fetchall()
+                
+                wallets = []
+                for address, balance_units in rows:
+                    wallets.append({
+                        'address': address,
+                        'balance_units': balance_units,
+                        'balance_nxt': balance_units / UNITS_PER_NXT
+                    })
+                
+                return jsonify({
+                    'success': True,
+                    'wallets': wallets,
+                    'total_wallets': len(wallets)
+                })
+        finally:
+            conn.close()
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @app.route('/api/wallet/balance')
 def get_wallet_balance():
     """Get wallet balance"""
