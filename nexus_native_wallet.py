@@ -45,6 +45,12 @@ from sqlalchemy.exc import OperationalError, DBAPIError
 from functools import wraps
 
 # ============================================================================
+# CRITICAL: Unified Unit Conversion Constant
+# ============================================================================
+# This constant MUST match across all NexusOS systems (WNSP, DEX, Mobile Hub, etc.)
+UNITS_PER_NXT = 100_000_000  # 100 million units per NXT
+
+# ============================================================================
 # Database Retry Decorator
 # ============================================================================
 
@@ -310,8 +316,8 @@ class NexusNativeWallet:
         """Initialize genesis accounts if they don't exist"""
         genesis_accounts = [
             ("VALIDATOR_POOL", 0),
-            ("TREASURY", 50000000),  # 500K NXT
-            ("ECOSYSTEM_FUND", 20000000)  # 200K NXT
+            ("TREASURY", 500_000 * UNITS_PER_NXT),  # 500K NXT in smallest units
+            ("ECOSYSTEM_FUND", 200_000 * UNITS_PER_NXT)  # 200K NXT in smallest units
         ]
         
         for address, balance in genesis_accounts:
@@ -392,7 +398,7 @@ class NexusNativeWallet:
         # Create persistent token account
         token_account = self._get_or_create_token_account(
             address,
-            initial_balance=int(initial_balance * 100)  # Convert to smallest units
+            initial_balance=int(initial_balance * UNITS_PER_NXT)  # Convert to smallest units
         )
         
         # Save wallet to database
@@ -409,7 +415,7 @@ class NexusNativeWallet:
             'address': address,
             'public_key': public_key,
             'spectral_regions': list(spectral_sig.keys()),
-            'balance_nxt': token_account.balance / 100.0,
+            'balance_nxt': token_account.balance / UNITS_PER_NXT,
             'created_at': wallet.created_at.isoformat()
         }
     
@@ -445,7 +451,7 @@ class NexusNativeWallet:
         
         return {
             'address': address,
-            'balance_nxt': token_account.balance / 100.0,
+            'balance_nxt': token_account.balance / UNITS_PER_NXT,
             'imported': True
         }
     
@@ -482,7 +488,7 @@ class NexusNativeWallet:
         
         return {
             'address': address,
-            'balance_nxt': account.balance / 100.0,
+            'balance_nxt': account.balance / UNITS_PER_NXT,
             'balance_units': account.balance,
             'nonce': account.nonce
         }
@@ -570,8 +576,8 @@ class NexusNativeWallet:
         )
         
         # Convert to smallest units
-        amount_units = int(amount_nxt * 100)
-        fee_units = int(fee_nxt * 100) if fee_nxt else 1  # Default 0.01 NXT fee
+        amount_units = int(amount_nxt * UNITS_PER_NXT)
+        fee_units = int(fee_nxt * UNITS_PER_NXT) if fee_nxt else 1  # Default 0.00000001 NXT fee
         
         # ═══════════════════════════════════════════════════════════════
         # ATOMIC TRANSACTION: All changes in ONE commit with row locks
@@ -640,7 +646,7 @@ class NexusNativeWallet:
                 from_address=from_address,
                 to_address=to_address,
                 amount_nxt=amount_nxt,
-                fee_nxt=(tx.fee / 100.0),
+                fee_nxt=(tx.fee / UNITS_PER_NXT),
                 status='confirmed',
                 wave_signature=json.dumps(quantum_proof['wave_signature']),
                 spectral_proof=json.dumps(quantum_proof['spectral_signatures']),
@@ -658,7 +664,7 @@ class NexusNativeWallet:
                 tx_id=tx_id,
                 io_type='input',
                 address=from_address,
-                amount_nxt=amount_nxt + (tx.fee / 100.0),
+                amount_nxt=amount_nxt + (tx.fee / UNITS_PER_NXT),
                 sequence=0,
                 is_spent=True,
                 spent_in_tx=tx_id
@@ -823,7 +829,7 @@ class NexusNativeWallet:
         cost_nxt = energy_cost * 1e-17  # Scale to NXT
         
         # Deduct cost from sender
-        cost_units = int(cost_nxt * 100)
+        cost_units = int(cost_nxt * UNITS_PER_NXT)
         account = self._get_token_account(from_address)
         if not account or account.balance < cost_units:
             raise ValueError("Insufficient balance for message cost")
@@ -1022,7 +1028,7 @@ class NexusNativeWallet:
         result = []
         for w in wallets:
             account = self._get_token_account(w.address)
-            balance_nxt = account.balance / 100.0 if account else 0.0
+            balance_nxt = account.balance / UNITS_PER_NXT if account else 0.0
             result.append({
                 'address': w.address,
                 'balance_nxt': balance_nxt,
@@ -1432,7 +1438,7 @@ class NexusNativeWallet:
                 if not incoming and not outgoing:
                     continue
                 
-                calculated_balance = sum(tx.amount_nxt * 100 for tx in incoming) - sum((tx.amount_nxt + tx.fee_nxt) * 100 for tx in outgoing)
+                calculated_balance = sum(tx.amount_nxt * UNITS_PER_NXT for tx in incoming) - sum((tx.amount_nxt + tx.fee_nxt) * UNITS_PER_NXT for tx in outgoing)
                 
                 # Allow small rounding differences
                 if abs(calculated_balance - account.balance) > 1:

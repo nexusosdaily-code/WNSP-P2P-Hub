@@ -57,6 +57,9 @@ class NexusWNSPWallet(NexusNativeWallet):
             session.add(mapping)
             session.commit()
             
+            # Get exact balance from ledger (no float reconstruction)
+            balance_result = super().get_balance(nexus_address)
+            
             return {
                 'success': True,
                 'wallet': {
@@ -64,8 +67,8 @@ class NexusWNSPWallet(NexusNativeWallet):
                     'device_name': device_name,
                     'auth_token': auth_token,
                     'nexus_address': nexus_address,
-                    'balance_units': int(initial_balance_nxt * UNITS_PER_NXT),
-                    'balance_nxt': initial_balance_nxt
+                    'balance_units': balance_result['balance_units'],  # Direct from ledger
+                    'balance_nxt': balance_result['balance_nxt']
                 }
             }
         except Exception as e:
@@ -86,9 +89,8 @@ class NexusWNSPWallet(NexusNativeWallet):
             if mapping.auth_token != auth_token:
                 return {'success': False, 'error': 'Invalid authentication token'}
             
-            # Get balance
-            balance_result = self.get_balance(mapping.nexus_address)
-            balance_nxt = balance_result.get('balance_nxt', 0)
+            # Get exact balance from ledger (no float reconstruction)
+            balance_result = super().get_balance(mapping.nexus_address)
             
             # Update last seen
             mapping.last_seen = datetime.utcnow()
@@ -100,8 +102,8 @@ class NexusWNSPWallet(NexusNativeWallet):
                     'device_id': device_id,
                     'device_name': mapping.device_name,
                     'nexus_address': mapping.nexus_address,
-                    'balance_units': int(balance_nxt * UNITS_PER_NXT),
-                    'balance_nxt': balance_nxt
+                    'balance_units': balance_result['balance_units'],  # Direct from ledger
+                    'balance_nxt': balance_result['balance_nxt']
                 }
             }
         except Exception as e:
@@ -118,14 +120,13 @@ class NexusWNSPWallet(NexusNativeWallet):
             if not mapping:
                 return {'success': False, 'error': 'Device not found'}
             
-            # Get balance from blockchain
+            # Get exact balance from ledger (no float reconstruction)  
             balance_result = super().get_balance(mapping.nexus_address)
-            balance_nxt = balance_result.get('balance_nxt', 0)
             
             return {
                 'success': True,
-                'balance_units': int(balance_nxt * UNITS_PER_NXT),
-                'balance_nxt': balance_nxt,
+                'balance_units': balance_result['balance_units'],  # Direct from ledger
+                'balance_nxt': balance_result['balance_nxt'],
                 'nexus_address': mapping.nexus_address
             }
         except Exception as e:
@@ -151,10 +152,9 @@ class NexusWNSPWallet(NexusNativeWallet):
             
             address = mapping.nexus_address
             
-            # Check balance
+            # Check balance (use exact ledger value, no float reconstruction)
             balance_result = super().get_balance(address)
-            balance_nxt = balance_result.get('balance_nxt', 0)
-            balance_units = int(balance_nxt * UNITS_PER_NXT)
+            balance_units = balance_result.get('balance_units', 0)
             
             if balance_units < amount_units:
                 return {
@@ -227,17 +227,14 @@ class NexusWNSPWallet(NexusNativeWallet):
             if not account:
                 return {'success': False, 'error': 'Account not found'}
             
-            # Apply actual cost (convert units to token account format)
-            amount_nxt = actual_amount_units / UNITS_PER_NXT
-            deduction_token_units = int(amount_nxt * 100)
-            
-            if account.balance < deduction_token_units:
+            # Deduct actual cost (already in correct units - no conversion needed)
+            if account.balance < actual_amount_units:
                 return {
                     'success': False,
                     'error': f'Insufficient balance for finalization'
                 }
             
-            account.balance -= deduction_token_units
+            account.balance -= actual_amount_units
             
             # Update reservation
             reservation.actual_amount_units = actual_amount_units
@@ -246,8 +243,8 @@ class NexusWNSPWallet(NexusNativeWallet):
             
             session.commit()
             
-            # Get final balance
-            final_balance_units = account.balance * 1_000_000
+            # Get final balance (already in correct units)
+            final_balance_units = account.balance
             
             return {
                 'success': True,
@@ -283,10 +280,10 @@ class NexusWNSPWallet(NexusNativeWallet):
             
             session.commit()
             
-            # Get current balance
+            # Get current balance (already in correct units)
             address = reservation.address
             account = self._get_token_account(address)
-            final_balance = account.balance * 1_000_000 if account else 0
+            final_balance = account.balance if account else 0
             
             return {
                 'success': True,
@@ -312,15 +309,14 @@ class NexusWNSPWallet(NexusNativeWallet):
             
             nexus_address = mapping.nexus_address
             
-            # Add to token account
-            amount_nxt = amount_units / UNITS_PER_NXT
+            # Add to token account (already in correct units)
             token_account = self._get_or_create_token_account(nexus_address)
-            token_account.balance += int(amount_nxt * 100)
+            token_account.balance += amount_units
             
             session.commit()
             
-            # Get new balance
-            new_balance_units = token_account.balance * 1_000_000
+            # Get new balance (already in correct units)
+            new_balance_units = token_account.balance
             
             return {
                 'success': True,
