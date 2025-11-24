@@ -248,10 +248,17 @@
 
         <!-- Broadcast Controls (hidden until phone registered) -->
         <div class="broadcast-controls" id="broadcastControls" style="display: none;">
-            <h2>Start Broadcasting</h2>
-            <p style="color: var(--accent); margin-bottom: 16px;">
-                📱 Logged in as: <strong id="userPhone">+1234567890</strong>
-            </p>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <div>
+                    <h2 style="margin: 0;">Start Broadcasting</h2>
+                    <p style="color: var(--accent); margin: 8px 0 0 0;">
+                        📱 Logged in as: <strong id="userPhone">+1234567890</strong>
+                    </p>
+                </div>
+                <button onclick="logoutPhone()" style="padding: 8px 16px; background: var(--error); border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 14px;">
+                    🚪 Logout
+                </button>
+            </div>
             
             <div class="consent-notice">
                 🔒 Your camera will only activate after you grant permission. Streams are peer-to-peer encrypted via WNSP mesh network.

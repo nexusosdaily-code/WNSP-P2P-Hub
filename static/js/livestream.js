@@ -178,6 +178,27 @@ function registerPhone() {
     socket.emit('register_phone', { phone_number: fullPhone });
 }
 
+function logoutPhone() {
+    /**
+     * Logout and clear saved phone number
+     */
+    // Clear localStorage
+    localStorage.removeItem('user_phone');
+    userPhone = null;
+    
+    // Show phone login, hide broadcast controls
+    document.getElementById('phoneLogin').style.display = 'block';
+    document.getElementById('broadcastControls').style.display = 'none';
+    
+    // Clear phone input
+    document.getElementById('phoneNumber').value = '';
+    
+    console.log('📱 Logged out - phone number cleared');
+    
+    // Reload page to reset state
+    location.reload();
+}
+
 // ============================================================================
 // FRIEND MANAGEMENT FUNCTIONS
 // ============================================================================
