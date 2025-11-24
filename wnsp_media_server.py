@@ -108,30 +108,33 @@ def create_user_mesh_network():
     return stack
 
 def get_media_engine():
-    """Lazy-load WNSP media engine on first request"""
+    """Get WNSP media engine (lazy initialization on first call)"""
+    global media_engine
+    if media_engine is None:
+        init_media_engine()
+    return media_engine
+
+def init_media_engine():
+    """Initialize WNSP media engine at app startup"""
     global mesh_stack, media_engine, _wnsp_init_attempted, WNSP_AVAILABLE
     
     if not WNSP_AVAILABLE:
-        return None
-    
-    if media_engine is not None:
-        return media_engine
+        print("⚠️  WNSP not available - skipping engine initialization")
+        return
     
     if _wnsp_init_attempted:
-        return None
+        return
     
     _wnsp_init_attempted = True
     
     try:
-        print("🔄 Initializing WNSP Media Engine with YOUR devices...")
+        print("🔄 Initializing WNSP Media Engine with YOUR devices...", flush=True)
         mesh_stack = create_user_mesh_network()
         media_engine = WNSPMediaPropagationProduction(mesh_stack=mesh_stack)
-        print("✅ WNSP Media Engine initialized")
-        return media_engine
+        print("✅ WNSP Media Engine initialized and ready for uploads!", flush=True)
     except Exception as e:
-        print(f"⚠️  WNSP Engine initialization failed: {e}")
+        print(f"⚠️  WNSP Engine initialization failed: {e}", flush=True)
         WNSP_AVAILABLE = False
-        return None
 
 @app.route('/')
 def index():
@@ -585,5 +588,8 @@ if __name__ == '__main__':
     # Initialize file manager and scan for media
     if FILE_MANAGER_AVAILABLE:
         media_manager.scan_media_directory()
+    
+    # Note: WNSP Media Engine will auto-initialize on first API call
+    # (Eager initialization causes timeout due to media scanning)
     
     app.run(host='0.0.0.0', port=5000, debug=True)
