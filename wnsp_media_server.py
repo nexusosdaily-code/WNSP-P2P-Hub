@@ -347,13 +347,26 @@ def upload_media():
             # Save file to disk
             file.save(filepath)
             
-            # Ingest file into WNSP network with category metadata
+            # Ingest file into file manager (for storage/streaming)
             media_id = media_manager.ingest_file(filepath, category=category)
             
             # 🌐 PEER-TO-PEER MESH PROPAGATION: Detect source device and propagate to peer
             propagation_results = []
             engine = get_media_engine()
             if engine and engine.mesh_stack:
+                # CRITICAL: Also ingest into WNSP engine for mesh propagation
+                try:
+                    wnsp_media_id = engine.ingest_media_file(
+                        filepath=filepath,
+                        filename=filename,
+                        file_type=file_ext.replace('.', ''),
+                        description=f"{category} content",
+                        category=category
+                    )
+                    print(f"✅ Ingested into WNSP engine: {wnsp_media_id}")
+                except Exception as ingest_error:
+                    print(f"⚠️  WNSP ingestion failed: {ingest_error}")
+                    wnsp_media_id = None
                 # Detect which device is uploading
                 source_ip = request.remote_addr
                 is_local = source_ip == '127.0.0.1' or source_ip.startswith('127.')
@@ -370,21 +383,24 @@ def upload_media():
                 print(f"📡 Propagating {filename} to {len(target_nodes)} peer node(s)...")
                 
                 # Propagate to peer nodes only (not back to source)
-                for node_id in target_nodes:
-                    try:
-                        result = engine.propagate_file_to_node(media_id, node_id, source_node_id=source_node)
-                        if result.get('success'):
-                            target_display = "💻 Computer" if node_id == "your_computer" else "📱 Phone"
-                            propagation_results.append({
-                                'node': node_id,
-                                'node_display': target_display,
-                                'chunks': result.get('successful_chunks', 0),
-                                'energy': result.get('total_energy', 0),
-                                'hops': result.get('total_hops', 0)
-                            })
-                            print(f"✅ {source_display} → {target_display}: {result.get('successful_chunks')} chunks, {result.get('total_hops')} hops, {result.get('total_energy'):.6f} NXT")
-                    except Exception as prop_error:
-                        print(f"⚠️  Propagation to {node_id} failed: {prop_error}")
+                if wnsp_media_id:
+                    for node_id in target_nodes:
+                        try:
+                            result = engine.propagate_file_to_node(wnsp_media_id, node_id, source_node_id=source_node)
+                            if result.get('success'):
+                                target_display = "💻 Computer" if node_id == "your_computer" else "📱 Phone"
+                                propagation_results.append({
+                                    'node': node_id,
+                                    'node_display': target_display,
+                                    'chunks': result.get('successful_chunks', 0),
+                                    'energy': result.get('total_energy', 0),
+                                    'hops': result.get('total_hops', 0)
+                                })
+                                print(f"✅ {source_display} → {target_display}: {result.get('successful_chunks')} chunks, {result.get('total_hops')} hops, {result.get('total_energy'):.6f} NXT")
+                        except Exception as prop_error:
+                            print(f"⚠️  Propagation to {node_id} failed: {prop_error}")
+                else:
+                    print("⚠️  Skipping propagation - WNSP ingestion failed")
             
             uploaded_files.append({
                 'filename': filename,
