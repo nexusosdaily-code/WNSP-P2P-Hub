@@ -297,11 +297,64 @@ def propagate_media():
             'error': str(e)
         }), 500
 
+@app.route('/api/peers')
+def get_nearby_peers():
+    """
+    Get list of nearby mesh network peers (friends) for targeted sharing
+    Returns discovered devices that can receive P2P content
+    """
+    engine = get_media_engine()
+    if not engine or not engine.mesh_stack:
+        return jsonify({
+            'success': False,
+            'error': 'Mesh network not initialized'
+        }), 503
+    
+    try:
+        # Get all mesh nodes
+        all_nodes = engine.mesh_stack.layer1_mesh_isp.nodes
+        
+        # Convert to peer list format
+        peers = []
+        for node_id, node in all_nodes.items():
+            # Display name based on node ID
+            if node_id == 'your_phone':
+                display_name = '📱 Your Phone'
+                device_type = 'phone'
+            elif node_id == 'your_computer':
+                display_name = '💻 Your Computer'
+                device_type = 'computer'
+            else:
+                display_name = node_id
+                device_type = 'unknown'
+            
+            peers.append({
+                'device_id': node_id,
+                'device_name': display_name,
+                'device_type': device_type,
+                'status': 'online',
+                'cache_capacity_mb': node.cache_capacity_mb,
+                'transport_protocols': [p.value for p in node.transport_protocols],
+                'is_current_device': False  # Will be set by frontend based on upload source
+            })
+        
+        return jsonify({
+            'success': True,
+            'peers': peers,
+            'total_peers': len(peers)
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 @app.route('/api/upload', methods=['POST'])
 def upload_media():
     """
     Handle file uploads to WNSP network
     Accepts: MP3, MP4, PDF files
+    Supports targeted friend sharing with E=hf energy cost
     """
     if not FILE_MANAGER_AVAILABLE:
         return jsonify({'error': 'File manager not available'}), 503
@@ -313,6 +366,11 @@ def upload_media():
     files = request.files.getlist('files')
     category = request.form.get('category', 'university')
     enable_encryption = request.form.get('enable_encryption', 'false').lower() == 'true'
+    
+    # NEW: Friend selection for targeted P2P sharing
+    share_mode = request.form.get('share_mode', 'broadcast')  # 'broadcast' or 'friends'
+    friend_ids_str = request.form.get('friend_ids', '')
+    friend_ids = [fid.strip() for fid in friend_ids_str.split(',') if fid.strip()]
     
     # Validate category
     valid_categories = ['university', 'refugee', 'rural', 'crisis']
@@ -406,11 +464,20 @@ def upload_media():
                     print(traceback.format_exc(), flush=True)
                     wnsp_media_id = None
                 
-                # Get all mesh nodes EXCEPT the source
+                # Determine target nodes based on share mode
                 all_nodes = list(engine.mesh_stack.layer1_mesh_isp.nodes.keys())
-                target_nodes = [n for n in all_nodes if n != source_node]
+                
+                if share_mode == 'friends' and friend_ids:
+                    # Targeted P2P sharing: Only send to selected friends
+                    target_nodes = [n for n in friend_ids if n != source_node and n in all_nodes]
+                    share_type = f"👥 Friends ({len(target_nodes)} selected)"
+                else:
+                    # Network broadcast: Send to all nodes except source
+                    target_nodes = [n for n in all_nodes if n != source_node]
+                    share_type = f"📡 Network Broadcast ({len(target_nodes)} nodes)"
                 
                 print(f"📤 Upload from {source_display} ({source_ip})")
+                print(f"📡 Share Mode: {share_type}")
                 print(f"📡 Propagating {filename} to {len(target_nodes)} peer node(s)...")
                 
                 # Propagate to peer nodes only (not back to source)
@@ -439,6 +506,8 @@ def upload_media():
                 'id': media_id,
                 'encrypted': enable_encryption,
                 'category': category,
+                'share_mode': share_mode,
+                'selected_friends': friend_ids if share_mode == 'friends' else [],
                 'propagated_to_nodes': len(propagation_results),
                 'propagation_details': propagation_results
             })
