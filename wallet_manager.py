@@ -125,3 +125,46 @@ class WalletManager:
     def add_balance(self, device_id: str, amount_units: int, description: str = "Manual top-up") -> Dict:
         """Add balance to wallet (admin/testing)"""
         return self.wallet.add_balance(device_id, amount_units, description)
+    
+    def get_wallet_by_auth(self, auth_token: str) -> Dict:
+        """Get wallet info by auth token (for upload authentication)"""
+        import psycopg2
+        db_url = os.environ.get('DATABASE_URL')
+        conn = psycopg2.connect(db_url)
+        
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT device_id, device_name, nexus_address, contact
+                    FROM nexus_device_wallet_mapping
+                    WHERE auth_token = %s
+                """, (auth_token,))
+                
+                row = cur.fetchone()
+                
+                if not row:
+                    return {'success': False, 'error': 'Invalid auth token'}
+                
+                device_id, device_name, nexus_address, contact = row
+                
+                # Get balance from blockchain
+                balance_result = self.wallet.get_balance(device_id)
+                
+                if balance_result['success']:
+                    return {
+                        'success': True,
+                        'wallet': {
+                            'device_id': device_id,
+                            'device_name': device_name,
+                            'nexus_address': nexus_address,
+                            'contact': contact,
+                            'balance_units': balance_result['balance_units'],
+                            'balance_nxt': balance_result['balance_nxt']
+                        }
+                    }
+                else:
+                    return balance_result
+        except Exception as e:
+            return {'success': False, 'error': f'Failed to get wallet: {str(e)}'}
+        finally:
+            conn.close()
