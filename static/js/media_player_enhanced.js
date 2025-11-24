@@ -915,13 +915,14 @@ function logoutWallet() {
         updateWalletUI();
         
         // Show success message
-        showToast('✅ Wallet disconnected successfully', 'success');
+        showWalletStatus('✅ Wallet disconnected successfully', 'success');
+        setTimeout(() => showWalletStatus('', ''), 3000);
     }
 }
 
 // Open Mobile Blockchain Hub
 function openBlockchainHub() {
-    showToast('ℹ️ Mobile Blockchain Hub is available in the main NexusOS Dashboard (app.py). This is the WNSP P2P Content Hub for decentralized file sharing.', 'info');
+    alert('ℹ️ Mobile Blockchain Hub is available in the main NexusOS Dashboard (app.py).\n\nThis is the WNSP P2P Content Hub for decentralized file sharing.');
 }
 
 // Load available wallets for import

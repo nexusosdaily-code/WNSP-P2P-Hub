@@ -34,6 +34,9 @@ except ImportError:
 app = Flask(__name__, static_folder='static')
 CORS(app)
 
+# Constants
+UNITS_PER_NXT = 100_000_000  # 1 NXT = 100,000,000 units
+
 # Security: Enforce maximum upload size (100MB)
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
 
@@ -466,7 +469,12 @@ def list_wallets():
     import psycopg2
     
     try:
-        conn = psycopg2.connect(os.getenv('DATABASE_URL'))
+        database_url = os.getenv('DATABASE_URL')
+        if not database_url:
+            app.logger.error("DATABASE_URL not set")
+            return jsonify({'success': False, 'error': 'Database not configured'}), 500
+            
+        conn = psycopg2.connect(database_url)
         try:
             with conn.cursor() as cur:
                 cur.execute("""
@@ -483,8 +491,8 @@ def list_wallets():
                 for address, balance_units in rows:
                     wallets.append({
                         'address': address,
-                        'balance_units': balance_units,
-                        'balance_nxt': balance_units / UNITS_PER_NXT
+                        'balance_units': int(balance_units),
+                        'balance_nxt': float(balance_units) / UNITS_PER_NXT
                     })
                 
                 return jsonify({
@@ -495,6 +503,7 @@ def list_wallets():
         finally:
             conn.close()
     except Exception as e:
+        app.logger.error(f"Error listing wallets: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/wallet/balance')
