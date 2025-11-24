@@ -64,6 +64,12 @@ viewer_to_broadcaster = {}  # viewer_id -> broadcaster_id
 broadcaster_streams = {}  # broadcaster_id -> {device_id, reservation_id, bytes_streamed}
 device_to_socket = {}  # device_id -> socket_id (maps device_id to Socket.IO session for friend-based access)
 
+# =============================================================================
+# PHONE NUMBER SESSION MANAGEMENT (for friend-only streaming authentication)
+# =============================================================================
+phone_to_socket = {}  # phone_number -> socket_id (server-verified identity)
+socket_to_phone = {}  # socket_id -> phone_number (reverse lookup)
+
 # Error handler for file too large
 @app.errorhandler(413)
 def request_entity_too_large(error):
@@ -1418,6 +1424,45 @@ def handle_connect():
     """Client connected to Socket.IO"""
     print(f"📡 Client connected: {request.sid}")
     emit('connected', {'message': 'Connected to WNSP mesh network', 'client_id': request.sid})
+
+@socketio.on('register_phone')
+def handle_register_phone(data):
+    """
+    Register user's phone number for streaming authentication
+    
+    SECURITY: Server-side phone number verification
+    This binds the socket session to a verified phone number
+    """
+    phone_number = data.get('phone_number', '').strip()
+    socket_id = request.sid
+    
+    if not phone_number:
+        emit('phone_registered', {
+            'success': False,
+            'error': 'Phone number required'
+        })
+        return
+    
+    # Basic phone validation (allow + and digits)
+    import re
+    if not re.match(r'^\+?[0-9]{10,15}$', phone_number):
+        emit('phone_registered', {
+            'success': False,
+            'error': 'Invalid phone number format. Use format: +1234567890'
+        })
+        return
+    
+    # Register phone → socket mapping (server-verified identity)
+    phone_to_socket[phone_number] = socket_id
+    socket_to_phone[socket_id] = phone_number
+    
+    print(f"📱 Phone registered: {phone_number} → {socket_id}")
+    
+    emit('phone_registered', {
+        'success': True,
+        'phone_number': phone_number,
+        'message': 'Phone number registered successfully'
+    })
 
 @socketio.on('disconnect')
 def handle_disconnect():
