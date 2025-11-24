@@ -92,17 +92,32 @@
         }
 
         .broadcast-card {
-            background: var(--bg-secondary);
-            padding: 16px;
-            border-radius: 8px;
-            margin-bottom: 12px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 16px;
             cursor: pointer;
             transition: all 0.3s;
+            border: 2px solid #ef4444;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+            animation: livePulse 2s infinite;
+        }
+
+        @keyframes livePulse {
+            0%, 100% { 
+                box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+                border-color: #ef4444;
+            }
+            50% { 
+                box-shadow: 0 0 30px rgba(239, 68, 68, 0.7);
+                border-color: #f87171;
+            }
         }
 
         .broadcast-card:hover {
-            background: rgba(99, 102, 241, 0.1);
-            border-left: 3px solid var(--accent);
+            background: linear-gradient(135deg, #1f1f3a 0%, #1a2744 100%);
+            transform: scale(1.02);
+            box-shadow: 0 0 40px rgba(239, 68, 68, 0.6);
         }
 
         .broadcast-title {
