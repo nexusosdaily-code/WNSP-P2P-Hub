@@ -533,6 +533,8 @@ def upload_media():
     Accepts: MP3, MP4, PDF files
     Supports targeted friend sharing with E=hf energy cost
     """
+    from wallet_manager import get_wallet_manager
+    
     if not FILE_MANAGER_AVAILABLE:
         return jsonify({'error': 'File manager not available'}), 503
     
