@@ -299,10 +299,35 @@ def upload_media():
             # Ingest file into WNSP network with category metadata
             media_id = media_manager.ingest_file(filepath, category=category)
             
+            # 🌐 AUTOMATIC MESH PROPAGATION: Distribute file to all network nodes
+            propagation_results = []
+            engine = get_media_engine()
+            if engine and engine.mesh_stack:
+                # Get all mesh nodes
+                mesh_nodes = list(engine.mesh_stack.layer1_mesh_isp.nodes.keys())
+                print(f"📡 Auto-propagating {filename} to {len(mesh_nodes)} mesh nodes...")
+                
+                # Propagate to each node in the mesh
+                for node_id in mesh_nodes:
+                    try:
+                        result = engine.propagate_file_to_node(media_id, node_id, source_node_id="upload_server")
+                        if result.get('success'):
+                            propagation_results.append({
+                                'node': node_id,
+                                'chunks': result.get('successful_chunks', 0),
+                                'energy': result.get('total_energy', 0),
+                                'hops': result.get('total_hops', 0)
+                            })
+                            print(f"✅ Propagated to {node_id}: {result.get('successful_chunks')} chunks, {result.get('total_hops')} hops")
+                    except Exception as prop_error:
+                        print(f"⚠️  Propagation to {node_id} failed: {prop_error}")
+            
             uploaded_files.append({
                 'filename': filename,
                 'id': media_id,
-                'category': category
+                'category': category,
+                'propagated_to_nodes': len(propagation_results),
+                'propagation_details': propagation_results
             })
         except Exception as e:
             errors.append(f'{filename}: Upload failed - {str(e)}')
