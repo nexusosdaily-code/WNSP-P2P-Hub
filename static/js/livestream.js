@@ -561,18 +561,37 @@ function addBroadcastToList(broadcast) {
     const card = document.createElement('div');
     card.className = 'broadcast-card';
     card.id = `broadcast-${broadcast.broadcaster_id}`;
-    card.onclick = () => joinBroadcast(broadcast.broadcaster_id);
+    card.style.cssText = 'touch-action: manipulation; -webkit-tap-highlight-color: rgba(239, 68, 68, 0.3);';
+    
+    // Handle both click and touch for mobile compatibility
+    const handleJoin = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('🎬 Broadcast card tapped! Joining:', broadcast.broadcaster_id);
+        joinBroadcast(broadcast.broadcaster_id);
+    };
+    
+    card.addEventListener('click', handleJoin);
+    card.addEventListener('touchend', handleJoin);
     
     card.innerHTML = `
-        <div class="broadcast-title">${broadcast.title}</div>
-        <div class="broadcast-meta">
-            ${categoryIcons[broadcast.category] || '📹'} ${broadcast.category} • 
-            <span style="color: var(--error);">🔴 LIVE</span> • 
-            ${broadcast.viewer_count || 0} watching
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div>
+                <div class="broadcast-title" style="font-size: 18px; font-weight: bold; color: white;">${broadcast.title || 'Live Broadcast'}</div>
+                <div class="broadcast-meta" style="margin-top: 4px;">
+                    ${categoryIcons[broadcast.category] || '📹'} ${broadcast.category || 'General'} • 
+                    <span style="color: #ef4444; font-weight: bold;">🔴 LIVE NOW</span> • 
+                    ${broadcast.viewer_count || 0} watching
+                </div>
+            </div>
+            <button style="background: #ef4444; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; font-size: 14px; pointer-events: none;">
+                ▶ WATCH
+            </button>
         </div>
     `;
     
     listEl.appendChild(card);
+    console.log('📺 Added broadcast card to list:', broadcast.broadcaster_id, broadcast.title);
 }
 
 function removeBroadcastFromList(broadcasterId) {
