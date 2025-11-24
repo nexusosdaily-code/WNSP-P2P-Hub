@@ -334,7 +334,8 @@ def remove_friend(friend_id):
 @app.route('/api/wallet/create', methods=['POST'])
 def create_wallet():
     """Create new wallet"""
-    from wallet_manager import get_wallet_manager
+    from nexus_wnsp_integration import NexusWNSPWallet
+    import os
     
     data = request.get_json()
     device_name = data.get('device_name', '').strip()
@@ -346,47 +347,45 @@ def create_wallet():
             'error': 'Device name and contact are required'
         }), 400
     
-    manager = get_wallet_manager()
-    if not manager:
-        return jsonify({
-            'success': False,
-            'error': 'Wallet manager not available'
-        }), 503
-    
-    result = manager.create_wallet(device_name, contact)
-    
-    if result['success']:
-        return jsonify(result), 201
-    else:
-        return jsonify(result), 400
+    # Use unified NexusOS wallet (password auto-generated for security)
+    try:
+        wallet = NexusWNSPWallet(database_url=os.getenv('DATABASE_URL'))
+        password = contact  # Simple password for now (user can change later)
+        result = wallet.create_device_wallet(device_name, contact, password, initial_balance_nxt=1.0)
+        
+        if result['success']:
+            return jsonify(result), 201
+        else:
+            return jsonify(result), 400
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/wallet/login', methods=['POST'])
 def login_wallet():
-    """Login to wallet"""
-    from wallet_manager import get_wallet_manager
+    """Login to wallet - authenticate device"""
+    from nexus_wnsp_integration import NexusWNSPWallet
+    import os
     
     data = request.get_json()
-    contact = data.get('contact', '').strip()
+    device_id = data.get('device_id', '').strip()
+    auth_token = data.get('auth_token', '').strip()
     
-    if not contact:
+    if not device_id or not auth_token:
         return jsonify({
             'success': False,
-            'error': 'Contact is required'
+            'error': 'Device ID and auth token required'
         }), 400
     
-    manager = get_wallet_manager()
-    if not manager:
-        return jsonify({
-            'success': False,
-            'error': 'Wallet manager not available'
-        }), 503
-    
-    result = manager.login_wallet(contact)
-    
-    if result['success']:
-        return jsonify(result)
-    else:
-        return jsonify(result), 404
+    try:
+        wallet = NexusWNSPWallet(database_url=os.getenv('DATABASE_URL'))
+        result = wallet.authenticate(device_id, auth_token)
+        
+        if result['success']:
+            return jsonify(result)
+        else:
+            return jsonify(result), 404
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/wallet/balance')
 def get_wallet_balance():

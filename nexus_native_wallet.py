@@ -191,6 +191,35 @@ class VerificationRecord(Base):
     # Complete proof object (JSON)
     full_proof = Column(Text, nullable=False)
 
+class EnergyReservation(Base):
+    """WNSP P2P energy cost reservations for two-phase transactions"""
+    __tablename__ = 'nexus_energy_reservations'
+    
+    id = Column(Integer, primary_key=True)
+    address = Column(String(64), nullable=False)  # NexusOS wallet address
+    device_id = Column(String(255), nullable=True)  # Optional device mapping
+    reserved_amount_units = Column(BigInteger, nullable=False)
+    actual_amount_units = Column(BigInteger, nullable=True)
+    filename = Column(String(255), nullable=True)
+    file_size = Column(BigInteger, nullable=True)
+    wavelength_nm = Column(Float, nullable=True)
+    status = Column(String(20), default='reserved')  # reserved, finalized, cancelled
+    created_at = Column(DateTime, default=datetime.utcnow)
+    finalized_at = Column(DateTime, nullable=True)
+
+class DeviceWalletMapping(Base):
+    """Maps simple device credentials to blockchain addresses"""
+    __tablename__ = 'nexus_device_wallet_mapping'
+    
+    id = Column(Integer, primary_key=True)
+    device_id = Column(String(255), unique=True, nullable=False)
+    device_name = Column(String(255), nullable=False)
+    contact = Column(String(255), nullable=False)
+    nexus_address = Column(String(64), nullable=False)
+    auth_token = Column(String(255), unique=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    last_seen = Column(DateTime, default=datetime.utcnow)
+
 
 # ============================================================================
 # NexusOS Native Wallet

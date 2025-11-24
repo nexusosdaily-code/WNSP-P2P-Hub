@@ -1,27 +1,41 @@
 #!/usr/bin/env python3
 """
 Wallet Manager for WNSP P2P Hub
-Simplified wallet system with PostgreSQL storage
+Now uses unified NexusOS blockchain wallet system
 """
 
-import psycopg2
 import os
-import hashlib
-import secrets
 from typing import Dict, Optional
 
 UNITS_PER_NXT = 100_000_000  # 100 million units per NXT
 
+# Global wallet instance
+_wallet_instance = None
+
+def get_wallet_manager():
+    """Get unified wallet instance"""
+    global _wallet_instance
+    if _wallet_instance is None:
+        from nexus_wnsp_integration import NexusWNSPWallet
+        _wallet_instance = NexusWNSPWallet(database_url=os.getenv('DATABASE_URL'))
+    return _wallet_instance
+
 class WalletManager:
-    """Manages wallet authentication and NXT balances"""
+    """
+    LEGACY WRAPPER - Now uses unified NexusOS blockchain wallet
+    
+    Provides backward compatibility for existing WNSP P2P Hub code
+    while using NexusWNSPWallet backend
+    """
     
     def __init__(self):
-        """Initialize database connection"""
-        self.db_url = os.environ.get('DATABASE_URL')
-        if not self.db_url:
-            raise ValueError("DATABASE_URL environment variable not set")
-        
-        self._init_database()
+        """Initialize unified wallet"""
+        from nexus_wnsp_integration import NexusWNSPWallet
+        self.wallet = NexusWNSPWallet(database_url=os.environ.get('DATABASE_URL'))
+    
+    def _init_database(self):
+        """No-op - database initialized by NexusWNSPWallet"""
+        pass
     
     def _get_connection(self):
         """Get database connection"""
@@ -68,8 +82,9 @@ class WalletManager:
             conn.close()
     
     def create_wallet(self, device_name: str, contact: str) -> Dict:
-        """Create new wallet with initial balance"""
-        conn = self._get_connection()
+        """Create new wallet - now uses unified blockchain wallet"""
+        password = contact  # Simple password (user can change later)
+        return self.wallet.create_device_wallet(device_name, contact, password, initial_balance_nxt=1.0)
         try:
             # Generate unique device ID from contact
             device_id = hashlib.sha256(f"{contact}{secrets.token_hex(8)}".encode()).hexdigest()[:16]
