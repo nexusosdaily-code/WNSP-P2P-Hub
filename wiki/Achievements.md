@@ -151,7 +151,7 @@ Real-time electromagnetic field calculations for validation:
 **Status: ACHIEVED**
 
 Bitcoin-style tokenomics with physics integration:
-- Fixed supply (21 billion NXT)
+- Fixed supply (i million NXT)
 - 1 NXT = 100,000,000 units
 - Deflationary mechanics
 - AI-controlled validator rewards
